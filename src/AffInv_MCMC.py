@@ -49,6 +49,11 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
     L_prop = np.zeros(n)
     for q in range(n): #calculate the log posteriors for all n
       L_acc[q] = LogPosterior(p_arr[q],*post_args)
+    
+    #print warning if any of the walkers are in restricted prior space
+    if np.any(L_acc == -np.inf):
+      raise Exception("warning: 1 or more walkers are initialised with log posterior = -np.inf!\n"+\
+        " - check inputs and error params")
         
     #store first step of the chain
     ParArr[0:n],PostArr[0:n] = p_arr,L_acc
