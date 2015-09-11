@@ -62,17 +62,17 @@ def AnalyseChains(conv_length,n_chains=None,chain_filenames=None,log_proposal=Fa
   print " log E =", logE
   if not N_obs:
     logE_BIC = logP_max
-    print " log E (BIC) =", logP_max, "- {}/2.*np.log(N)".format(D)
+    print " log E (BIC) = log ML - D/2.*np.log(N) =", logP_max, "- {}/2.*np.log(N)".format(D)
   else:
     logE_BIC = logP_max - D/2.*np.log(N_obs)
-    print " log E (BIC) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs)
+    print " log E (BIC) = log ML - D/2.*np.log(N) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs)
   
   if not N_obs:
     logE_AIC = logP_max - D
-    print " log E (AIC) =", logE_AIC, "(D = {}, no n corr used!)".format(D)
+    print " log E (AIC) = log ML - D =", logE_AIC, "(D = {})".format(D)
   else:
     logE_AIC = logP_max - D * N_obs / (N_obs-D-1.)
-    print " log E (AIC) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs)
+    print " log E (AIC) = log ML - DN/(N-D-1) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs)
   
   ret_list = [mean,gauss_err]
   if return_GR: ret_list.append(GR)

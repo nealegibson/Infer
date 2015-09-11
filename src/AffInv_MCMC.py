@@ -40,7 +40,7 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
     p_arr = np.random.normal(0,1,(n,no_pars)) * e + p
     
     ####### individual chain ###############
-    #np.random.seed()
+    np.random.seed()
     start = time.time() 
     PrintBar(n_ch,chain,0,ch_len*n,start,AccArr)
     
