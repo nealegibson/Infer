@@ -257,7 +257,7 @@ def PlotCorrelations_inv(conv_length,p=None,n_chains=None,chain_filenames=None,s
   pylab.subplots_adjust(left=0.07,bottom=0.07,right=0.93,top=0.93,wspace=0.00001,hspace=0.00001)
   
   for file in chain_filenames:  
-    Data = np.loadtxt(file+'.npy')
+    Data = np.load(file+'.npy')
     index = np.random.randint(conv_length,Data[:,0].size,n_samples) #randomly sample the data for plots
 
     for i in range(no_pars): #loop over the parameter indexes supplied
