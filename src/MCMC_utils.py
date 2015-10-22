@@ -175,19 +175,19 @@ def PlotCorrelations(conv_length,p=None,n_chains=None,chain_filenames=None,savep
   """
   
   #get chain names tuple
-  if n_chains == None and chain_filenames == None:
+  if n_chains is None and chain_filenames is None:
     chain_filenames=("MCMC_chain",)  
-  if n_chains != None:
+  if n_chains is not None:
     chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
   
-  if p==None: #get total number of parmaeters if not supplied
+  if p is None: #get total number of parmaeters if not supplied
 #    no_pars = len(open(chain_filenames[0],'r').readline().split())-1
     no_pars = np.load(chain_filenames[0]+'.npy')[0].size-1
     p=range(no_pars)
   else:
     no_pars = len(p)
 
-  if labels == None: #create labels for plots if not provided
+  if labels is None: #create labels for plots if not provided
     labels = ['p[%d]' % p[q] for q in range(no_pars)]
 
   #new fig and adjust plot params
