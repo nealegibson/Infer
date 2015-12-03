@@ -158,10 +158,10 @@ class MGP(object):
   def kfVec_pred(self,i=0):
     "Return the ith vector from the GP input matrix."
     return self.kf_args_pred.getA()[:,i]
-        
+    
   def Describe(self):
     "Print the attributes of the GP object."
-
+    
     print "--------------------------------------------------------------------------------"
     print "GP attributes:"
     print " Target values t:", self.t.shape, type(self.t)
