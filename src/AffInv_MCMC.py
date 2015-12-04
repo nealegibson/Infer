@@ -55,12 +55,13 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
       while L_acc[q] == -np.inf:
         no_recomp += 1
         if no_recomp > 20:
-          print "warning: after 20 attempts walker still initiated in restricted prior space!"
+          print "warning: after 20 attempts walker {} still initiated in restricted prior space!".format(q+1)
+          break
         p_arr[q] = np.random.normal(0,1,no_pars) * e + p
         L_acc[q] = LogPosterior(p_arr[q],*post_args)
-      
+    
     #raise exception if any of the walkers are in restricted prior space
-    while np.any(L_acc == -np.inf):
+    if np.any(L_acc == -np.inf):
       raise Exception("warning: 1 or more walkers are initialised with log posterior = -np.inf!\n"+\
         " - check inputs and error params")
         
