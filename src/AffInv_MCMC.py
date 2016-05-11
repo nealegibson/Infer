@@ -59,6 +59,21 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
           break
         p_arr[q] = np.random.normal(0,1,no_pars) * e + p
         L_acc[q] = LogPosterior(p_arr[q],*post_args)
+
+    #randomly reassign starting points to good ones where left in restricted prior space
+    #after resampling
+    if np.any(L_acc == -np.inf):
+      print "warning: some walkers are initialised in restricted posterior space."
+      print "reassigning them - check input uncertainties are ok!"
+      inf_ind = np.where(L_acc == -np.inf)[0]
+      good_ind = np.where(L_acc != -np.inf)[0]
+      #loop over bad points
+      for q in inf_ind:
+        #randomly choose a new 'good' point from those already assigned
+        q_random = np.random.choice(good_ind)
+        #assign new parameter set and log posterior
+        p_arr[q] = p_arr[q_random]
+        L_acc[q] = L_acc[q_random]
     
     #raise exception if any of the walkers are in restricted prior space
     if np.any(L_acc == -np.inf):

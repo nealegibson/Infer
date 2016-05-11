@@ -81,7 +81,7 @@ def PlotSlice(LogLikelihood,par,low,upp,par_in,func_args=(),plot_samp=100):
   pylab.xlabel("p[%s]" % str(i))
   pylab.ylabel("Posterior")
 
-def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False):
+def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False,Nsig=3):
   """
   Function to find the range of conditional distributions for each variable parameter, ie
   vary each parameter until delta chi_2 = 1.
@@ -126,7 +126,7 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
     av_err = (np.abs(err_pos)+np.abs(err_neg))/2.
     
     if plot: #make plots of the conditionals with max and limits marked
-      par_range = np.linspace(op_par[i]-3*err_neg[i],op_par[i]+3*err_pos[i],plot_samp)
+      par_range = np.linspace(op_par[i]-Nsig*err_neg[i],op_par[i]+Nsig*err_pos[i],plot_samp)
       log_lik = np.zeros(plot_samp)
       temp_par = np.copy(op_par)
       for q,par_val in enumerate(par_range):
