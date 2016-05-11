@@ -81,7 +81,7 @@ def PlotSlice(LogLikelihood,par,low,upp,par_in,func_args=(),plot_samp=100):
   pylab.xlabel("p[%s]" % str(i))
   pylab.ylabel("Posterior")
 
-def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False,Nsig=3):
+def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False,Nsig=3,Nloops=1):
   """
   Function to find the range of conditional distributions for each variable parameter, ie
   vary each parameter until delta chi_2 = 1.
@@ -109,42 +109,44 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
   err_pos = np.zeros(len(par))
   err_neg = np.zeros(len(par))
   
-  #loop through the variables
-  for i in np.where(np.array(err) != 0.)[0]:
+  #loop Nloops times
+  for loop in range(Nloops):
+    #loop through the variables
+    for i in np.where(np.array(err) != 0.)[0]:
     
-    #create fixed and var par arrays
-    fixed = (np.arange(len(err))!=i)*1
-    fixed_par = op_par[np.where(fixed==True)]
-    var_par = op_par[np.where(fixed!=True)]
+      #create fixed and var par arrays
+      fixed = (np.arange(len(err))!=i)*1
+      fixed_par = op_par[np.where(fixed==True)]
+      var_par = op_par[np.where(fixed!=True)]
     
-    #for each dimension, optimise and solve for logL = logL_max - 0.5
-    op_par = Optimise(LogLikelihood,op_par,func_args,fixed=fixed,verbose=False)
-    max_loglik = LogLikelihood(op_par,*func_args)
-    err_pos[i] = fsolve(FixedPar_func_offset,op_par[i]+err[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
-    err_neg[i] = op_par[i] - fsolve(FixedPar_func_offset,op_par[i]-err[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) 
+      #for each dimension, optimise and solve for logL = logL_max - 0.5
+      op_par = Optimise(LogLikelihood,op_par,func_args,fixed=fixed,verbose=False)
+      max_loglik = LogLikelihood(op_par,*func_args)
+      err_pos[i] = fsolve(FixedPar_func_offset,op_par[i]+err[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
+      err_neg[i] = op_par[i] - fsolve(FixedPar_func_offset,op_par[i]-err[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) 
     
-    av_err = (np.abs(err_pos)+np.abs(err_neg))/2.
+      av_err = (np.abs(err_pos)+np.abs(err_neg))/2.
     
-    if plot: #make plots of the conditionals with max and limits marked
-      par_range = np.linspace(op_par[i]-Nsig*err_neg[i],op_par[i]+Nsig*err_pos[i],plot_samp)
-      log_lik = np.zeros(plot_samp)
-      temp_par = np.copy(op_par)
-      for q,par_val in enumerate(par_range):
-        temp_par[i] = par_val
-        log_lik[q] = LogLikelihood(temp_par,*func_args)
-      pylab.clf()
-      pylab.plot(par_range,log_lik)
-      pylab.plot(par_range,max_loglik-(par_range-op_par[i])**2/2./av_err[i]**2,'r--')
-      pylab.axvline(op_par[i],color='r')
-      pylab.axvline(old_op_par[i],color='0.5',ls='--')
-      pylab.axvline(op_par[i]+err_pos[i],color='g')
-      pylab.axvline(op_par[i]-err_neg[i],color='g')
-      pylab.axhline(max_loglik-0.5,color='g',ls='--')
-      pylab.axhline(max_loglik,color='r',ls='--')
-      pylab.xlabel("p[%s]" % str(i))
-      pylab.ylabel("log Posterior")
-      #print "mean (+-) = ", op_par[i], err_pos[i], err_neg[i],
-      raw_input("")  
+      if plot: #make plots of the conditionals with max and limits marked
+        par_range = np.linspace(op_par[i]-Nsig*err_neg[i],op_par[i]+Nsig*err_pos[i],plot_samp)
+        log_lik = np.zeros(plot_samp)
+        temp_par = np.copy(op_par)
+        for q,par_val in enumerate(par_range):
+          temp_par[i] = par_val
+          log_lik[q] = LogLikelihood(temp_par,*func_args)
+        pylab.clf()
+        pylab.plot(par_range,log_lik)
+        pylab.plot(par_range,max_loglik-(par_range-op_par[i])**2/2./av_err[i]**2,'r--')
+        pylab.axvline(op_par[i],color='r')
+        pylab.axvline(old_op_par[i],color='0.5',ls='--')
+        pylab.axvline(op_par[i]+err_pos[i],color='g')
+        pylab.axvline(op_par[i]-err_neg[i],color='g')
+        pylab.axhline(max_loglik-0.5,color='g',ls='--')
+        pylab.axhline(max_loglik,color='r',ls='--')
+        pylab.xlabel("p[%s]" % str(i))
+        pylab.ylabel("log Posterior")
+        #print "mean (+-) = ", op_par[i], err_pos[i], err_neg[i],
+        raw_input("")  
 
   return op_par,(np.abs(err_pos)+np.abs(err_neg))/2.
 
