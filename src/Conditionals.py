@@ -106,8 +106,8 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
   if opt: op_par = Optimise(LogLikelihood,par[:],func_args,fixed=(np.array(err) == 0)*1)
   else: op_par = np.copy(par)
   old_op_par = np.copy(op_par)
-  err_pos = np.zeros(len(par))
-  err_neg = np.zeros(len(par))
+  err_pos = np.copy(err)
+  err_neg = np.copy(err)
   
   #loop Nloops times
   for loop in range(Nloops):
@@ -118,15 +118,17 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
       fixed = (np.arange(len(err))!=i)*1
       fixed_par = op_par[np.where(fixed==True)]
       var_par = op_par[np.where(fixed!=True)]
-    
+
       #for each dimension, optimise and solve for logL = logL_max - 0.5
+      old_op_par = np.copy(op_par) #store old opt pars for plotting
       op_par = Optimise(LogLikelihood,op_par,func_args,fixed=fixed,verbose=False)
       max_loglik = LogLikelihood(op_par,*func_args)
-      err_pos[i] = fsolve(FixedPar_func_offset,op_par[i]+err[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
-      err_neg[i] = op_par[i] - fsolve(FixedPar_func_offset,op_par[i]-err[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) 
-    
+      err_pos[i] = fsolve(FixedPar_func_offset,op_par[i]+err_pos[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
+      #err_neg[i] = op_par[i] - fsolve(FixedPar_func_offset,op_par[i]-err_neg[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) 
+      #just copy positive error, as messes up for bounded priors
+      err_neg[i] = np.copy(err_pos[i])
       av_err = (np.abs(err_pos)+np.abs(err_neg))/2.
-    
+      
       if plot: #make plots of the conditionals with max and limits marked
         par_range = np.linspace(op_par[i]-Nsig*err_neg[i],op_par[i]+Nsig*err_pos[i],plot_samp)
         log_lik = np.zeros(plot_samp)
@@ -146,7 +148,8 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
         pylab.xlabel("p[%s]" % str(i))
         pylab.ylabel("log Posterior")
         #print "mean (+-) = ", op_par[i], err_pos[i], err_neg[i],
-        raw_input("")  
+        pylab.draw()
+        raw_input()
 
   return op_par,(np.abs(err_pos)+np.abs(err_neg))/2.
 
