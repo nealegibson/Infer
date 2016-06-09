@@ -86,6 +86,7 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
   if fixed is None:
     bf_par = fitted_par
     return_err = np.sqrt(np.diag(K_fit))
+    err_par = np.sqrt(np.diag(K_fit))
     K = K_fit
   else:
     bf_par = np.copy(par)    
@@ -117,9 +118,11 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
   sign,logdetK = np.linalg.slogdet( 2*np.pi*K_fit ) # get log determinant
   logE = logP_max + 0.5 * logdetK #get evidence approximation based on Gaussian assumption
   
-  #expand K to the complete covariance matrix - ie even fixed parameters + white noise
-  ind = np.hstack([(fixed==0).cumsum()[np.where(fixed==1)],K.diagonal().size]) #get index to insert zeros
-  Kn = np.insert(np.insert(K,ind,0,axis=0),ind,0,axis=1) #insert zeros corresponding to fixed pars
+  if fixed is None:
+    Kn = K
+  else: #expand K to the complete covariance matrix - ie even fixed parameters + white noise
+    ind = np.hstack([(fixed==0).cumsum()[np.where(fixed==1)],K.diagonal().size]) #get index to insert zeros
+    Kn = np.insert(np.insert(K,ind,0,axis=0),ind,0,axis=1) #insert zeros corresponding to fixed pars
   
   print "Gaussian Evidence approx:"
   print " log ML =", logP_max
