@@ -75,7 +75,7 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
   else:
     bounds_var = bounds[np.where(fixed!=True)]
   
-  #perform the optimisation:  
+  #perform the optimisation:
   if bounds is None: R = leastsq(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),full_output=1)
   else: R = leastsqbound(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),bounds=bounds_var,full_output=1)
   

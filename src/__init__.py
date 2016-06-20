@@ -18,6 +18,7 @@ from MCMC_utils import *
 from ImportanceSampling import *
 from Conditionals import *
 from Optimiser import *
+from BruteForce import *
 from LevenbergMarquardt import *
 
 from MCMC_BGibbs import *
