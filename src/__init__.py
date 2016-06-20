@@ -19,6 +19,7 @@ from ImportanceSampling import *
 from Conditionals import *
 from Optimiser import *
 from BruteForce import *
+from DifferentialEvolution import *
 from LevenbergMarquardt import *
 
 from MCMC_BGibbs import *

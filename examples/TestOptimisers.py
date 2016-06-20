@@ -57,51 +57,63 @@ BR_par = Infer.Brute(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(
 #BRUTE2 = Infer.Optimise(MF.LogLikelihood_iid_mf,BRUTE,(mf,time,f),fixed=[0,0,0,0,0,1])
 BRLM_par,BRLM_epar,R,K,logE = Infer.LevMar(mf,BR_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
 
+#fit with differential evolution algorithm and then LM
+DE_par = Infer.DifferentialEvolution(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),epar)
+DELM_par,DELM_epar,R,K,logE = Infer.LevMar(mf,DE_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
+
 #------------------------------
 
 #plot results
 pylab.figure(figsize=(8,11))
-pylab.subplot(611)
+pylab.subplot(711)
 pylab.plot(time,f,'k.')
 pylab.plot(time,mf(par,time),'r-')
 pylab.plot(time,mf(par_guess,time),'b-')
 pylab.plot(time,mf(LM1_par,time),'g-',lw=1)
 pylab.ylabel('LM1')
 
-pylab.subplot(612)
+pylab.subplot(712)
 pylab.plot(time,f,'k.')
 pylab.plot(time,mf(par,time),'r-')
 pylab.plot(time,mf(par_guess,time),'b-')
 pylab.plot(time,mf(LM2_par,time),'g-',lw=1)
 pylab.ylabel('LM2')
 
-pylab.subplot(613)
+pylab.subplot(713)
 pylab.plot(time,f,'k.')
 pylab.plot(time,mf(par,time),'r-')
 pylab.plot(time,mf(par_guess,time),'b-')
 pylab.plot(time,mf(LM3_par,time),'g-',lw=1)
 pylab.ylabel('LM3')
 
-pylab.subplot(614)
+pylab.subplot(714)
 pylab.plot(time,f,'k.')
 pylab.plot(time,mf(par,time),'r-')
 pylab.plot(time,mf(par_guess,time),'b-')
 pylab.plot(time,mf(MCMC_par,time),'g-',lw=1)
 pylab.ylabel('MCMC')
 
-pylab.subplot(615)
+pylab.subplot(715)
 pylab.plot(time,f,'k.')
 pylab.plot(time,mf(par,time),'r-')
 pylab.plot(time,mf(par_guess,time),'b-')
 pylab.plot(time,mf(NM_par,time),'g-',lw=1)
 pylab.ylabel('NM')
 
-pylab.subplot(616)
+pylab.subplot(716)
 pylab.plot(time,f,'k.')
 pylab.plot(time,mf(par,time),'r-')
 pylab.plot(time,mf(par_guess,time),'b-')
 pylab.plot(time,mf(BR_par,time),'c-',lw=1)
 pylab.plot(time,mf(BRLM_par,time),'g-',lw=1)
+pylab.ylabel('BR')
+
+pylab.subplot(717)
+pylab.plot(time,f,'k.')
+pylab.plot(time,mf(par,time),'r-')
+pylab.plot(time,mf(par_guess,time),'b-')
+pylab.plot(time,mf(DE_par,time),'c-',lw=1)
+pylab.plot(time,mf(DELM_par,time),'g-',lw=1)
 pylab.ylabel('BR')
 pylab.draw()
 
@@ -113,6 +125,8 @@ print ((f-mf(MCMC_par,time))**2).sum() / time.size
 print ((f-mf(NM_par,time))**2).sum() / time.size
 print ((f-mf(BR_par,time))**2).sum() / time.size
 print ((f-mf(BRLM_par,time))**2).sum() / time.size
+print ((f-mf(DE_par,time))**2).sum() / time.size
+print ((f-mf(DELM_par,time))**2).sum() / time.size
 
 print "Pars"
 print LM1_par
@@ -121,6 +135,8 @@ print LM3_par
 print NM_par
 print MCMC_par
 print BRLM_par
+print DE_par
+print DELM_par
 
 print "Errors"
 print LM1_epar
@@ -128,5 +144,6 @@ print LM2_epar
 print LM3_epar
 print MCMC_epar
 print BRLM_epar
+print DELM_epar
 
 raw_input()
