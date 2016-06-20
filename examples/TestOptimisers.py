@@ -5,10 +5,11 @@ import numpy as np
 import Infer
 import scipy.optimize as opt
 import MyFuncs as MF
+import os
 
 #define non-linear mean function
 def mf(p,time):
-  return (p[0] + p[1] + p[1]*time + p[2]*time**2 + p[3]*np.sin(2*np.pi*p[4]*time))
+  return (p[0] + p[1] + p[1]*time + p[2]*time**2 + p[3]*np.sin(2*np.pi*p[4]*time) + p[5]*np.cos(2*np.pi*p[6]*time))
 
 #define merit function for levenberg marquardt
 def LM_ErrFunc(par,func,func_args,y,err):
@@ -17,17 +18,18 @@ def LM_ErrFunc(par,func,func_args,y,err):
 ##########################################################################################
 #generate some fake data
 time = np.linspace(0,1,500)
-par = [-40,40,-40,3,2]
+par = [-40,40,-40,3,2,7,4]
 par_noise = 1.
 par_guess = np.random.normal(par,par_noise) #add 'noise' to the guess parameters
-epar = [par_noise,]*5 + [0.0,]
+epar = [par_noise,]*7 + [0.0,]
+fp = [0,0,0,0,0,0,0,1]
 wn = 0.6
 f = mf(par,time) + np.random.normal(0,wn,time.size)
 
 ##########################################################################################
 
 #fit with levenburg marquardt
-NM_temp = Infer.Optimise(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),fixed=[0,0,0,0,0,1])
+NM_temp = Infer.Optimise(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),fixed=fp)
 LM1 = opt.leastsq(LM_ErrFunc,NM_temp[:-1],args=(mf,time,f,1),full_output=1)
 rescale1 = (f-mf(LM1[0],time)).std()
 LM1_par = LM1[0]
@@ -42,24 +44,25 @@ LM2_par = LM2.x
 LM2_epar = np.sqrt(np.diag(C)) * rescale2
 
 #fit with Infer.LevMar method
-LM3_par,LM3_epar,R,K,logE = Infer.LevMar(mf,par_guess,(time,),f,fixed=~(np.array(epar[:-1])>0))
+LM3_par,LM3_epar,R,K,logE = Infer.LevMar2(mf,par_guess,(time,),f,fixed=~(np.array(epar[:-1])>0))
 
 #fit with simple MCMC
 lims=[1000,20000,5]
 Infer.MCMC_N(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),30000,epar,adapt_limits=lims, glob_limits=lims,N=2)
 MCMC_par,MCMC_epar = Infer.AnalyseChains(20000,n_chains=2)
+os.system('rm MCMC_chain_?.npy')
 
 #fit with nelder mead
-NM_par = Infer.Optimise(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),fixed=[0,0,0,0,0,1])
+NM_par = Infer.Optimise(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),fixed=fp)
 
 #fit with brute force/Infer
 BR_par = Infer.Brute(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),epar,Niter=2000,verbose=False)
 #BRUTE2 = Infer.Optimise(MF.LogLikelihood_iid_mf,BRUTE,(mf,time,f),fixed=[0,0,0,0,0,1])
-BRLM_par,BRLM_epar,R,K,logE = Infer.LevMar(mf,BR_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
+BRLM_par,BRLM_epar,R,K,logE = Infer.LevMar2(mf,BR_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
 
 #fit with differential evolution algorithm and then LM
 DE_par = Infer.DifferentialEvolution(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),epar)
-DELM_par,DELM_epar,R,K,logE = Infer.LevMar(mf,DE_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
+DELM_par,DELM_epar,R,K,logE = Infer.LevMar2(mf,DE_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
 
 #------------------------------
 
@@ -114,7 +117,7 @@ pylab.plot(time,mf(par,time),'r-')
 pylab.plot(time,mf(par_guess,time),'b-')
 pylab.plot(time,mf(DE_par,time),'c-',lw=1)
 pylab.plot(time,mf(DELM_par,time),'g-',lw=1)
-pylab.ylabel('BR')
+pylab.ylabel('DE')
 pylab.draw()
 
 print "RMSs:"

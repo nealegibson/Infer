@@ -2,7 +2,7 @@
 import numpy as np
 import time
 from scipy.optimize import fmin,brute,fmin_cg,fmin_powell
-from scipy.optimize import leastsq,least_squares
+from scipy.optimize import leastsq
 
 from leastsqbound import leastsqbound
 
@@ -10,7 +10,7 @@ from leastsqbound import leastsqbound
 
 def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False,return_AIC=False):#,maxiter=10000, maxfun=10000, verbose=True):
   """
-  Function wrapper for Levenberg-Marquardt via scipy.optimize.least_sq
+  Function wrapper for Levenberg-Marquardt via scipy.optimize.leastsq
   
   Similar interface to Optimiser.py to allow for fixed parameters. I have included
   code from https://github.com/jjhelmus/leastsqbound-scipy/ in order to implement the
@@ -76,16 +76,11 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
     bounds_var = bounds[np.where(fixed!=True)]
   
   #perform the optimisation:
-  #if bounds is None: R = leastsq(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),full_output=1)
-  if bounds is None:
-    R = least_squares(LM_ErrFunc,var_par,args=(func,func_args,y,err,fixed,fixed_par),method='trf',verbose=1)
-    fitted_par = R.x
-    H = np.dot(R.jac.T,R.jac) #hessian matrix
-    K_fit = np.linalg.inv(H) #covariance matrix  
-  else:
-    R = leastsqbound(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),bounds=bounds_var,full_output=1)
-    fitted_par = R[0]
-    K_fit = R[1]
+  if bounds is None: R = leastsq(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),full_output=1)
+  else: R = leastsqbound(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),bounds=bounds_var,full_output=1)
+  
+  fitted_par = R[0]
+  K_fit = R[1]
   
   #reconstruct the full parameter vector and covariance matrix
   if fixed is None:
@@ -157,8 +152,8 @@ def LogLikelihood_iid(r,beta,sig=1.):
 
 ##########################################################################################
 #create some aliases
-LeastSQ2 = LevMar
-LM2 = LevMar
+LeastSQ = LevMar
+LM = LevMar
 
 ##########################################################################################
 

@@ -21,6 +21,7 @@ from Optimiser import *
 from BruteForce import *
 from DifferentialEvolution import *
 from LevenbergMarquardt import *
+#from LevenbergMarquardt2 import *
 
 from MCMC_BGibbs import *
 from AffInv_MCMC import *
