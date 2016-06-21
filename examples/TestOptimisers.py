@@ -22,6 +22,7 @@ par = [-40,40,-40,3,2,7,4]
 par_noise = 1.
 par_guess = np.random.normal(par,par_noise) #add 'noise' to the guess parameters
 epar = [par_noise,]*7 + [0.0,]
+epar[2] = 0
 fp = [0,0,0,0,0,0,0,1]
 wn = 0.6
 f = mf(par,time) + np.random.normal(0,wn,time.size)
@@ -44,7 +45,7 @@ LM2_par = LM2.x
 LM2_epar = np.sqrt(np.diag(C)) * rescale2
 
 #fit with Infer.LevMar method
-LM3_par,LM3_epar,R,K,logE = Infer.LevMar2(mf,par_guess,(time,),f,fixed=~(np.array(epar[:-1])>0))
+LM3_par,LM3_epar,R,K,logE = Infer.LevMar(mf,par_guess,(time,),f,fixed=~(np.array(epar[:-1])>0))
 
 #fit with simple MCMC
 lims=[1000,20000,5]
@@ -58,11 +59,11 @@ NM_par = Infer.Optimise(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]
 #fit with brute force/Infer
 BR_par = Infer.Brute(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),epar,Niter=2000,verbose=False)
 #BRUTE2 = Infer.Optimise(MF.LogLikelihood_iid_mf,BRUTE,(mf,time,f),fixed=[0,0,0,0,0,1])
-BRLM_par,BRLM_epar,R,K,logE = Infer.LevMar2(mf,BR_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
+BRLM_par,BRLM_epar,R,K,logE = Infer.LevMar(mf,BR_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
 
 #fit with differential evolution algorithm and then LM
-DE_par = Infer.DifferentialEvolution(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),epar)
-DELM_par,DELM_epar,R,K,logE = Infer.LevMar2(mf,DE_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
+DE_par = Infer.DE(MF.LogLikelihood_iid_mf,np.concatenate([par_guess,[wn,]]),(mf,time,f),epar)
+DELM_par,DELM_epar,R,K,logE = Infer.LevMar(mf,DE_par,(time,),f,fixed=~(np.array(epar[:-1])>0))
 
 #------------------------------
 

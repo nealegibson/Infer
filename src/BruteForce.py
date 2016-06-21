@@ -47,7 +47,7 @@ def Brute(LogLikelihood,par,func_args,epar,type='max',Nsig=3,Niter=1000,verbose=
   B = brute(OptFunc,par_ranges,args=(LogLikelihood,func_args),full_output=1,finish=None)
   
   #print out results
-  if verbose: print "Brute force {} grid point @ {}".format(type,B[0])
+  if verbose: print "Brute force {} grid point @ {}\n".format(type,B[0])
 
   #return the optimised position
   return B[0]

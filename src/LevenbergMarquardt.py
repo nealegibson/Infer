@@ -8,13 +8,13 @@ from leastsqbound import leastsqbound
 
 ##########################################################################################
 
-def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False,return_AIC=False):#,maxiter=10000, maxfun=10000, verbose=True):
+def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False,return_AIC=False,verbose=True):#,maxiter=10000, maxfun=10000, verbose=True):
   """
   Function wrapper for Levenberg-Marquardt via scipy.optimize.least_sq
   
   Similar interface to Optimiser.py to allow for fixed parameters. I have included
   code from https://github.com/jjhelmus/leastsqbound-scipy/ in order to implement the
-  bound case (leastsqbound), else defaults to leastsq (which leastsqbound does anyway!)
+  bound case (leastsqbound), else defaults to least_squares
   
   Has a similar syntax to Optimiser, but requires the function to be passed rather than
   the likelihood function (therefore cannot optimise noise parameters, GPs etc). Added
@@ -78,14 +78,16 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
   #perform the optimisation:
   #if bounds is None: R = leastsq(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),full_output=1)
   if bounds is None:
-    R = least_squares(LM_ErrFunc,var_par,args=(func,func_args,y,err,fixed,fixed_par),method='trf',verbose=1)
+    R = least_squares(LM_ErrFunc,var_par,args=(func,func_args,y,err,fixed,fixed_par),method='trf',verbose=0)
     fitted_par = R.x
     H = np.dot(R.jac.T,R.jac) #hessian matrix
-    K_fit = np.linalg.inv(H) #covariance matrix  
+    K_fit = np.linalg.inv(H) #covariance matrix
+    nfev = R.nfev
   else:
     R = leastsqbound(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),bounds=bounds_var,full_output=1)
     fitted_par = R[0]
     K_fit = R[1]
+    nfev = R[2]['nfev']
   
   #reconstruct the full parameter vector and covariance matrix
   if fixed is None:
@@ -109,10 +111,12 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
   resid = y - func(bf_par,*func_args)
   wn = np.std(resid)
   
-  print "LM fit parameter estimates:"
-  print " par = mean +- err"
-  for i in range(bf_par.size): print " p[{}] = {:.8f} +- {:.8f}".format(i,bf_par[i],err_par[i])
-  print "white noise =", wn
+  if verbose:
+    print "-"*80
+    print "LM fit parameter estimates: (function evals: {})".format(nfev)
+    print " par = mean +- err"
+    for i in range(bf_par.size): print " p[{}] = {:.8f} +- {:.8f}".format(i,bf_par[i],err_par[i])
+    print "white noise =", wn
   
   #calculate the log evidence for the best fit model
   logP_max = LogLikelihood_iid(resid,1.,err*rescale)
@@ -123,17 +127,19 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
   sign,logdetK = np.linalg.slogdet( 2*np.pi*K_fit ) # get log determinant
   logE = logP_max + 0.5 * logdetK #get evidence approximation based on Gaussian assumption
   
-  if fixed is None:
+  if fixed is None or fixed.sum()==0:
     Kn = K
   else: #expand K to the complete covariance matrix - ie even fixed parameters + white noise
     ind = np.hstack([(fixed==0).cumsum()[np.where(fixed==1)],K.diagonal().size]) #get index to insert zeros
     Kn = np.insert(np.insert(K,ind,0,axis=0),ind,0,axis=1) #insert zeros corresponding to fixed pars
   
-  print "Gaussian Evidence approx:"
-  print " log ML =", logP_max
-  print " log E =", logE
-  print " log E (BIC) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs)
-  print " log E (AIC) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs)
+  if verbose:
+    print "Gaussian Evidence approx:"
+    print " log ML =", logP_max
+    print " log E =", logE
+    print " log E (BIC) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs)
+    print " log E (AIC) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs)
+    print "-"*80
   
   ret_list = [bf_par,err_par,rescale,Kn,logE]
   if return_BIC: ret_list.append(logE_BIC)
