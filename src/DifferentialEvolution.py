@@ -76,20 +76,8 @@ def DifferentialEvol(LogLikelihood,par,func_args,epar=None,bounds=None,type='max
   if verbose:
     print "-"*80
     print "Differential Evolution parameter ranges:"
-    #for i,j in enumerate(np.arange(par.size)[~fixed]):
-    #  print " p[{}] => {}".format(j,bounds_var[i])
-    #for j in np.arange(par.size)[fixed]:
-    #  print " p[{}] => fixed".format(j)
-    print "test2:"
     for i in range(par.size):
-      #print i, (~fixed[:i]).sum()
-      #print bounds_var
-      #print fixed[i]
-      #print "t",bounds_var[(~fixed[:i]).sum()]
-      #print 'fixed' if fixed[i] else bounds_var[(~fixed[:i]).sum()]
-      #raw_input('2')
       print " p[{}] => {}".format(i,'fixed' if fixed[i] else bounds_var[(~fixed[:i]).sum()])
-      #raw_input('1')
   
   #run the DE algorithm, without finishing algorithm
   if fixed.sum() == None:
