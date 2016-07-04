@@ -49,7 +49,7 @@ def AnalyseChains(conv_length,n_chains=None,chain_filenames=None,log_proposal=Fa
   m = X[:,1:].mean(axis=0)
   K = np.cov(X[:,1:]-m,rowvar=0) #better to mean subtract first to avoid rounding errors
   #get max likelihood
-  logP_max = X[:,0].max()
+  logP_max = np.nanmax(X[:,0])
   #first must compress the covariance matrix as some parameters are fixed!
   var_par = np.diag(K)>0
   Ks = K.compress(var_par,axis=0);Ks = Ks.compress(var_par,axis=1)
