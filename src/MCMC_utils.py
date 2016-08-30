@@ -297,7 +297,7 @@ def GelRub(chain_files,col,l):
   """
   
   no_chains = len(chain_files)
-  L = float(len(np.load(chain_files[0]+'.npy')[:,0])-l)
+  L = int(len(np.load(chain_files[0]+'.npy')[:,0])-l)
   
   #create empty arrays for data
   data = np.empty(no_chains*L,dtype=np.float64).reshape(no_chains,L)
@@ -318,7 +318,7 @@ def GelRub(chain_files,col,l):
   if no_chains > 1: #calculate GR statistic
     W = var.mean(dtype=np.float64) #mean of the variances
     B = mean.var(dtype=np.float64) #variance of the means
-    GR = np.sqrt((((L-1.)/L)*W + B) / W) #GR stat
+    GR = np.sqrt((((L-1.)/float(L))*W + B) / W) #GR stat
   else:
     GR = -2
     
