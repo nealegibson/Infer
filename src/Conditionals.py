@@ -3,7 +3,7 @@ import numpy as np
 import time
 import pylab
 from scipy.optimize import fmin,brute,fmin_cg,fmin_powell
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve,brentq
 
 from Optimiser import *
 
@@ -123,7 +123,17 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
       old_op_par = np.copy(op_par) #store old opt pars for plotting
       op_par = Optimise(LogLikelihood,op_par,func_args,fixed=fixed,verbose=False)
       max_loglik = LogLikelihood(op_par,*func_args)
-      err_pos[i] = fsolve(FixedPar_func_offset,op_par[i]+err_pos[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
+      
+      #find where logLikelihood changes by 0.5 using root finding
+      #err_pos[i] = fsolve(FixedPar_func_offset,op_par[i]+err_pos[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
+      
+      #use bracketed search to avoid infs - first ensure that bracket leads to negative f(x)
+      delta = 2.*err_pos[i] #first set to twice the uncertainty
+      while FixedPar_func_offset(op_par[i]+delta,max_loglik,LogLikelihood,func_args,fixed,fixed_par) > 0.:
+        delta *= 2
+      #now use bracketed search to find the root
+      err_pos[i] = brentq(FixedPar_func_offset,op_par[i],op_par[i]+delta,(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
+      
       #err_neg[i] = op_par[i] - fsolve(FixedPar_func_offset,op_par[i]-err_neg[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) 
       #just copy positive error, as messes up for bounded priors
       err_neg[i] = np.copy(err_pos[i])
