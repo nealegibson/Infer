@@ -88,6 +88,31 @@ def AnalyseChains(conv_length,n_chains=None,chain_filenames=None,log_proposal=Fa
 #   else: return mean,gauss_err
   
 ###############################################################################
+def GetSamples(conv_length,N,n_chains=None,chain_filenames=None):
+  """
+  Get N samples from chains
+  
+  """
+  
+  #get chain names tuple
+  if n_chains == None and chain_filenames == None:
+    chain_filenames=("MCMC_chain",)  
+  if n_chains != None:
+    chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
+    
+  #merge files into large matrix
+  X = np.load(chain_filenames[0]+'.npy')[conv_length:] #read in data file  
+  for i in range(1,len(chain_filenames)):
+    X = np.concatenate((X,np.load(chain_filenames[i]+'.npy')[conv_length:]))
+  
+  #create random index
+  Q = X.shape[0] #length of array
+  index = np.random.randint(0,Q,N) #get N random integers
+  
+  #return the random samples:
+  return X[:,1:][index]
+  
+###############################################################################
 
 def GetBestFit(n_chains=None,chain_filenames=None,conv_length=0):
   """

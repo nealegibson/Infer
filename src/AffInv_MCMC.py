@@ -92,8 +92,8 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
       rand_draw = np.random.rand(n)
       
       # for each q, need to pick a random int from 0 to n-1, but not = q
-      rand_in = np.random.randint(0,n-1,n) # let the value of the index be = n as a rand draw
-      rand_in[np.where(rand_in == np.arange(n))] = n-1 # ie cannot be the same as n
+      rand_in = np.random.randint(0,n-1,n) # let the value of the index be = n-1 as a rand draw
+      rand_in[np.where(rand_in == np.arange(n))] = n-1 # ie replace with n-1
       
       #loop over each walker - must be updated in series - ie with the updated p_arr
       for q in range(n):
