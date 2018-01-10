@@ -8,7 +8,7 @@ from leastsqbound import leastsqbound
 
 ##########################################################################################
 
-def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False,return_AIC=False,verbose=True):#,maxiter=10000, maxfun=10000, verbose=True):
+def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False,return_AIC=False,verbose=True,fix_noise=False):#,maxiter=10000, maxfun=10000, verbose=True):
   """
   Function wrapper for Levenberg-Marquardt via scipy.optimize.least_sq
   
@@ -38,6 +38,7 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
     - input None where for no lower/upper boundary. bounds = None uses std leastsq
   return_BIC : return BIC evidence estimate
   return_AIC : return AIC evidence estimate
+  fix_noise : if True, don't rescale errorbars according to chi2
   
   Returns
   -------
@@ -104,8 +105,9 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
   
   #rescale errors and covariance
   rescale = np.std((y - func(bf_par,*func_args)) / err)
-  K_fit *= rescale**2
-  err_par *= rescale
+  if not fix_noise:
+    K_fit *= rescale**2
+    err_par *= rescale
   
   #estimate the white noise from the residuals
   resid = y - func(bf_par,*func_args)
@@ -119,7 +121,8 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
     print "white noise =", wn
   
   #calculate the log evidence for the best fit model
-  logP_max = LogLikelihood_iid(resid,1.,err*rescale)
+  if fix_noise: logP_max = LogLikelihood_iid(resid,1.,err)
+  else: logP_max = LogLikelihood_iid(resid,1.,err*rescale)
   D = np.diag(K_fit).size
   N_obs = y.size
   logE_BIC = logP_max - D/2.*np.log(N_obs)

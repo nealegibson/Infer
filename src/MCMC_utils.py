@@ -315,7 +315,6 @@ def PlotCorrelations_inv(conv_length,p=None,n_chains=None,chain_filenames=None,s
 
 ###############################################################################
 
-
 def GelRub(chain_files,col,l):
   """
   Compute the Gelman and Rubin statistic and errors for one parameter (in column col).
