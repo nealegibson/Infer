@@ -83,8 +83,10 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
   K = np.array([np.diag(e[0]**2),]*N)
   np.random.seed()
   RandArr = np.random.multivariate_normal(np.zeros(p[0].size),K[0],(N,var_ch_len)) * G[0]
+  #set columns to zero after too! - for large K sometimes zero variance parameters have small random scatter
+  for n in range(N): RandArr[n,:][:,np.where(e[n]==0.)[0]] = 0.
   RandNoArr = np.random.rand(N,var_ch_len)
-    
+  
   ####### loop over chain iterations ###############
   start = time.time()
   i = 0
@@ -113,7 +115,8 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
         for n in range(N):
           if orth: K[n] = np.diag(((e + 4*ParArr[n][adapt_limits[0]/thin:i/thin].std(axis=0))/5.)**2.) #for diagonal covariance matrix
           else: K[n] = (K[n] + 4.*np.cov(ParArr[n][adapt_limits[0]/thin:i/thin],rowvar=0))/5.
-          K[n][np.where(e[n]==0.)],K[n][:,np.where(e[n]==0.)] = 0.,0. #reset error=0. values to 0.
+#          K[n][np.where(e[n]==0.)],K[n][:,np.where(e[n]==0.)] = 0.,0. #reset error=0. values to 0.
+          K[n][np.where(np.isclose(e[n],0.))],K[n][:,np.where(np.isclose(e[n],0.))] = 0.,0. #reset error=0. values to 0.
           RandArr[n,i:] = np.random.multivariate_normal(np.zeros(p[n].size),K[n],var_ch_len-i) * G[n]
           RandArr[n,i:][:,np.where(e[n]==0.)[0]] = 0. #set columns to zero after too!
     #adaptive global step size

@@ -65,7 +65,9 @@ def MCMC(LogPosterior,gp,post_args,ch_len,ep,chain_filenames=['MCMC_chain'],n_ch
     #RA = np.random.normal(0.,1.,len(p)*ch_len).reshape(ch_len,len(p)) * e * G
     np.random.seed()
     RandArr = np.random.np.random.multivariate_normal(np.zeros(p.size),K,ch_len) * G
-    
+    #set columns to zero after too! - for large K sometimes zero variance parameters have small random scatter
+    RandArr[:][:,np.where(e==0.)[0]] = 0.
+  
     #print "Computing Chain %d: '%s' " % (n+1,chain),
     ####### individual chain ###############
     start = time.time() 

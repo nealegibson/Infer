@@ -1,4 +1,4 @@
-from distutils.core import setup, Extension
+from numpy.distutils.core import setup, Extension
 #from setuptools import setup, Extension
 
 setup(
@@ -13,7 +13,7 @@ setup(
   
   #and extension package for solving toeplitz matrices...
   ext_modules = [
-    Extension("Infer.LevinsonTrenchZoharSolve",sources=["src/LevinsonTrenchZoharSolve.c"]),
+    Extension("Infer.LevinsonTrenchZoharSolve",sources=["src/LevinsonTrenchZoharSolve.c"],),
     ]
 
   )
