@@ -324,7 +324,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
   if parallel: pool.close()
   
   #reset parameters where e=0 to avoid numerical errors
-  mean[np.where(np.isclose(e,0.))] = gp
+  mean[np.where(np.isclose(e,0.))] = p[np.where(np.isclose(e,0.))]
   stdev[np.where(np.isclose(e,0.))] = 0.
   
   #and return
