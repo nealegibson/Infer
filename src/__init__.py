@@ -25,6 +25,7 @@ from LevenbergMarquardt import *
 
 from MCMC_BGibbs import *
 from AffInv_MCMC import *
+from DEMCMC import *
 
 from InferGP import GP
 from InferMGP import MGP

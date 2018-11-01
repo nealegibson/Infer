@@ -11,7 +11,7 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
   """
   Affine invariant MCMC. ep only used for starting distribution, need n is number of walkers
   and ch_len is the number of iterations over that
-    
+  
   """
   
   #first set chain filenames

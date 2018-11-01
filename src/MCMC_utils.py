@@ -4,6 +4,7 @@ MCMC utils for analysing Infer.MCMC output.
 
 import numpy as np
 import pylab
+import scipy.ndimage as ndimage
 
 ###############################################################################
 
@@ -19,6 +20,8 @@ def AnalyseChains(conv_length,n_chains=None,chain_filenames=None,log_proposal=Fa
     chain_filenames=("MCMC_chain",)  
   if n_chains != None:
     chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
+  if type(chain_filenames) is str:
+    chain_filenames = [chain_filenames,]
   
   #get number of parmaeters
   #no_pars = len(open(chain_filenames[0],'r').readline().split())-1
@@ -99,6 +102,8 @@ def GetSamples(conv_length,N,n_chains=None,chain_filenames=None):
     chain_filenames=("MCMC_chain",)  
   if n_chains != None:
     chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
+  if type(chain_filenames) is str:
+    chain_filenames = [chain_filenames,]
     
   #merge files into large matrix
   X = np.load(chain_filenames[0]+'.npy')[conv_length:] #read in data file  
@@ -124,6 +129,8 @@ def GetBestFit(n_chains=None,chain_filenames=None,conv_length=0):
     chain_filenames=("MCMC_chain",)  
   if n_chains != None:
     chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
+  if type(chain_filenames) is str:
+    chain_filenames = [chain_filenames,]
   
   #get number of parmaeters
   #no_pars = len(open(chain_filenames[0],'r').readline().split())-1
@@ -152,6 +159,8 @@ def PlotChains(conv_length,p=None,n_chains=None,chain_filenames=None,saveplot=Fa
     chain_filenames=("MCMC_chain",)  
   if n_chains != None:
     chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
+  if type(chain_filenames) is str:
+    chain_filenames = [chain_filenames,]
   
   if p==None: #get total number of parmaeters if not supplued
     #no_pars = len(open(chain_filenames[0],'r').readline().split())-1
@@ -204,6 +213,8 @@ def PlotCorrelations(conv_length,p=None,n_chains=None,chain_filenames=None,savep
     chain_filenames=("MCMC_chain",)  
   if n_chains is not None:
     chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
+  if type(chain_filenames) is str:
+    chain_filenames = [chain_filenames,]
   
   if p is None: #get total number of parmaeters if not supplied
 #    no_pars = len(open(chain_filenames[0],'r').readline().split())-1
@@ -234,7 +245,7 @@ def PlotCorrelations(conv_length,p=None,n_chains=None,chain_filenames=None,savep
         if(i==q):
           hdata = pylab.hist(Data[:,p[i]+1][conv_length:],20,histtype='step',normed=1)   
           pylab.xlim(hdata[1].min(),hdata[1].max())
-          pylab.ylim(hdata[0].min(),hdata[0].max()*1.1)
+          pylab.ylim(0,hdata[0].max()*1.1)
         else: pylab.plot(Data[:,p[q]+1][index],Data[:,p[i]+1][index],'.')
         
         if q == 0: pylab.ylabel(labels[i])
@@ -294,7 +305,7 @@ def PlotCorrelations_inv(conv_length,p=None,n_chains=None,chain_filenames=None,s
         if(i==q):
           hdata = pylab.hist(Data[:,p[i]+1][conv_length:],20,histtype='step',normed=1)   
           pylab.xlim(hdata[1].min(),hdata[1].max())
-          pylab.ylim(hdata[0].min(),hdata[0].max()*1.1)
+          pylab.ylim(0,hdata[0].max()*1.1)
         else: pylab.plot(Data[:,p[q]+1][index],Data[:,p[i]+1][index],'.')
         
         #place axis at top and right
@@ -365,3 +376,148 @@ def GelRub(chain_files,col,l):
   return dist_mean,dist_median,err,upper-dist_median,dist_median-lower,GR
 
 ###############################################################################
+
+def PlotCorrelations_im(conv_length,p=None,n_chains=None,chain_filenames=None,saveplot=False,filename="CorrelationPlot.pdf",labels=None,n_samples=500,cmap=None):
+
+  #get chain names tuple
+  if n_chains == None and chain_filenames == None:
+    chain_filenames=["MCMC_chain.npy",]
+  if n_chains is not None:
+    chain_filenames = ["MCMC_chain_{}.npy".format(i+1) for i in range(n_chains)]
+  
+  print chain_filenames
+  
+  if p==None: #get total number of parmaeters if not supplied
+    no_pars = np.load(chain_filenames[0])[0].size-1
+    p=range(no_pars)
+  else:
+    no_pars = len(p)
+
+  if labels == None: #create labels for plots if not provided
+    labels = []
+    for q in range(no_pars):
+      labels.append('p[%d]' % p[q]) 
+  
+  print no_pars
+  pylab.subplots_adjust(left=0.07,bottom=0.07,right=0.93,top=0.93,wspace=0.0001,hspace=0.0001)
+  
+#   Data = [0,0,0,0]
+#   index = [0,0,0,0]
+#   for s,file in enumerate(chain_filenames):  
+#     Data[s] = np.loadtxt(file)
+#     index[s] = np.random.randint(conv_length,Data[s][:,0].size,n_samples) #randomly sample the data for plots
+  
+  Data = [np.load(file) for file in chain_filenames]
+  index = [np.random.randint(conv_length,Data[s][:,0].size,n_samples) for s in range(len(chain_filenames))]
+  
+  for i in range(no_pars): #loop over the parameter indexes supplied
+    for q in range(i+1):
+      pylab.subplot(no_pars,no_pars,i*no_pars+q+1,xticks=[],yticks=[]) #select subplot
+      
+      if(i==q):
+        hdata = [pylab.hist(d[:,p[i]+1][conv_length:],20,histtype='step',normed=1,color='k') for d in Data]
+        pylab.xlim(hdata[0][1].min(),hdata[0][1].max())
+        pylab.ylim(0,hdata[0][0].max()*1.1)
+      else:
+        #pylab.plot(Data[:,p[q]+1][index],Data[:,p[i]+1][index],'.',ms=3)
+        temp_dat1 = np.concatenate([d[:,p[q]+1][conv_length:] for d in Data])
+#        temp_dat1 = np.concatenate([Data[0][:,p[q]+1][conv_length:],Data[1][:,p[q]+1][conv_length:],Data[2][:,p[q]+1][conv_length:],Data[3][:,p[q]+1][conv_length:]])
+        temp_dat2 = np.concatenate([d[:,p[i]+1][conv_length:] for d in Data])
+#        temp_dat2 = np.concatenate([Data[0][:,p[i]+1][conv_length:],Data[1][:,p[i]+1][conv_length:],Data[2][:,p[i]+1][conv_length:],Data[3][:,p[i]+1][conv_length:]])
+        DensityPlot(temp_dat1,temp_dat2,bins=(20,20),plot=True,plot_contour=1,cmap=cmap,interpolation=None)
+      if q == 0: pylab.ylabel(labels[i])
+      if i == (no_pars-1): pylab.xlabel(labels[q])
+
+##########################################################################################
+# def PlotCorrelations_inv_im(conv_length,p=None,n_chains=None,chain_filenames=None,saveplot=False,filename="CorrelationPlot.pdf",labels=None,n_samples=500,cmap=None):
+# 
+#   #get chain names tuple
+#   if n_chains == None and chain_filenames == None:
+#     chain_filenames=("MCMC_chain",)  
+#   if n_chains != None:
+#     chain_filenames = []
+#     for i in range(n_chains):
+#       chain_filenames.append("MCMC_chain_%d" % (i+1))
+#   
+#   if p==None: #get total number of parmaeters if not supplied
+#     no_pars = len(open(chain_filenames[0],'r').readline().split())-1
+#     p=range(no_pars)
+#   else:
+#     no_pars = len(p)
+# 
+#   if labels == None: #create labels for plots if not provided
+#     labels = []
+#     for q in range(no_pars):
+#       labels.append('p[%d]' % p[q]) 
+#   
+#   Data = [0,0,0,0]
+#   index = [0,0,0,0]
+#   for s,file in enumerate(chain_filenames):  
+#     Data[s] = np.loadtxt(file)
+#     index[s] = np.random.randint(conv_length,Data[s][:,0].size,n_samples) #randomly sample the data for plots
+# 
+#   for i in range(no_pars): #loop over the parameter indexes supplied
+#     for q in range(i+1):
+#       pylab.subplot(10,10,(no_pars-i)*10-q,xticks=[],yticks=[]) #select subplot
+#               
+#       if(i==q):
+#         hdata = pylab.hist(Data[0][:,p[i]+1][conv_length:],20,histtype='step',normed=1,color='k')   
+#         hdata = pylab.hist(Data[1][:,p[i]+1][conv_length:],20,histtype='step',normed=1,color='r')   
+#         hdata = pylab.hist(Data[2][:,p[i]+1][conv_length:],20,histtype='step',normed=1,color='b')   
+#         hdata = pylab.hist(Data[3][:,p[i]+1][conv_length:],20,histtype='step',normed=1,color='g')   
+#         pylab.xlim(hdata[1].min(),hdata[1].max())
+#         pylab.ylim(hdata[0].min(),hdata[0].max()*1.1)
+#       else:
+#         #pylab.plot(Data[:,p[q]+1][index],Data[:,p[i]+1][index],'.',ms=3)
+#         temp_dat1 = np.concatenate([Data[0][:,p[q]+1][conv_length:],Data[1][:,p[q]+1][conv_length:],Data[2][:,p[q]+1][conv_length:],Data[3][:,p[q]+1][conv_length:]])
+#         temp_dat2 = np.concatenate([Data[0][:,p[i]+1][conv_length:],Data[1][:,p[i]+1][conv_length:],Data[2][:,p[i]+1][conv_length:],Data[3][:,p[i]+1][conv_length:]])
+#         DensityPlot(temp_dat1,temp_dat2,bins=(40,40),plot=True,plot_contour=1,cmap=cmap,interpolation=None)
+#       #place axis at top and right
+#       pylab.gca().yaxis.set_label_position('right')
+#       pylab.gca().xaxis.set_label_position('top')
+#       
+#       if q == 0: pylab.ylabel(labels[i])
+#       if i == (no_pars-1): pylab.xlabel(labels[q])
+
+##########################################################################################
+def DensityPlot(x,y,bins=(50,50),range=None,sigma=1.5,plot=False,interpolation='nearest',cmap=None,plot_contour=0):
+  
+  #get the 2d histogram
+  H,a,b = np.histogram2d(y,x,bins=bins,range=range)
+  H /= H.max()
+  
+  #smooth using a Gaussian filter
+  if sigma: SH = ndimage.gaussian_filter(H, sigma=sigma, order=0)
+  else: SH = H[:]
+  SH = (SH - SH.min())/(SH.max()-SH.min())
+
+  q = SH.flatten()
+  q.sort()
+  qsum = np.cumsum(q)
+  qsum /= qsum.max()
+  s3 = q[np.where(qsum<0.0027000000000000357)[0][-1]]
+  s2 = q[np.where(qsum<0.045499999999999985)[0][-1]]
+  s1 = q[np.where(qsum<0.31730000000000003)[0][-1]]
+  
+  if range==None:
+    extent = range
+  else: extent = [range[0][0],range[0][1],range[1][0],range[1][1]]
+  
+  extent = None
+  
+  if plot:
+    pylab.imshow(np.sqrt(SH),extent=extent,origin='lower',interpolation=interpolation,cmap=cmap,vmin=0.0,vmax=1.)
+  if plot_contour:
+    pylab.contour(SH,extent=extent,origin='lower',levels=(s2,s1),colors='k')
+#    pylab.contour(SH,extent=extent,origin='lower',levels=(s3,),colors='k')#,linestyles='dashed')
+  #  pylab.xlim(b.min(),b.max())
+  #  pylab.ylim(a.min(),a.max())
+  
+  #return the image
+  return SH
+
+
+
+
+
+
