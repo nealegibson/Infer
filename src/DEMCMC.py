@@ -19,7 +19,7 @@ import multiprocessing
 def logP(pars):  return LogPosterior(pars,*post_args)
 
 def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',burnin=40,n_burnin=5,\
-  n_gr=4,gr=1.01,g=None,c=0.01,n_gamma=10,g_glob=0.999,cull=1,dlogP=50,init='norm',\
+  n_gr=4,gr=1.01,g=None,c=0.01,n_gamma=10,g_glob=0.999,cull=1,dlogP=50,init='norm',Xsamp=None,\
   thin=1,max_ext=0,ext_len=None,parallel=False,n_p=None,var_g=True):
   """
   Differential Evolution MCMC based on Ter Braak (2006).
@@ -57,6 +57,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
   cull[1] - replace very log starting points (>dlogP from max) by repetition
   dlogP[100] - delta logP to cull
   init[norm] - distribution for starting arrays, normal or uniform
+    - init can also be a 2D array of samples x n_parameters, to start chains in a specific state
   thin[1] - thin the chains by this amount, ie only record every 'thin' steps of the chain
   max_ext[0] - no of extensions to the chain if gr not met
   ext_len[ch_len/2] - length of extensions  
@@ -109,7 +110,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
   #set starting uncertainties
   if ep is None: ep = np.ones(len(gp))/100. #use a small Gaussian ball as default, but no idea of scale
   p,e = np.array(gp),np.array(ep)
-
+  
   #check # of chains
   if N == None:
     N = max((np.array(ep) > 0).sum(),12)
@@ -170,8 +171,12 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
   start = time.time()
   
   #initiate chain positions and compute posterior
-  p_acc = init_pars(p,e,N,init)  
-  L_acc = np.array(map_func(logP,p_acc))
+  if Xsamp is not None: #use samples if given
+    assert Xsamp.shape == p_acc.shape, "shape of Xsamp array must match MCMC pars"
+    p_acc = Xsamp
+  else: 
+    p_acc = init_pars(p,e,N,init)
+  L_acc = np.array(map_func(logP,p_acc)) #compute posterior for starting positions
   
   # recompute any in restricted prior space
   cull_list = []
@@ -193,7 +198,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
     L_acc_max = L_acc.max()
     #get index for where L_acc is good
     ind_good = np.where((L_acc > L_acc_max-dlogP))[0]
-    assert ind_good.size > 1, "must have more than 1 good point for culling!"
+    assert ind_good.size > 1, "must have more than 1 good point for culling (have {})!".format(ind_good.size)
     print("\x1B[3m(culled {}/{} points)\x1B[23m".format(N-ind_good.size,N))
     for n in range(N):
       if L_acc[n] < L_acc_max-dlogP:# or L_acc[n] == -np.inf:
@@ -255,9 +260,10 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
     ################ Update gamma ################
     if var_g and (i <= burnin) and i % (burnin//n_burnin) == 0:
       lims = [i//thin-burnin//n_burnin,i//thin]
-      acc = 0.234
+      acc = 0.234 #target acceptance
       #rescale gamma for target acceptance
-      g *= (1/acc) * (AccArr[:,lims[0]:lims[1]].sum() / np.float(lims[1]-lims[0]) / N)
+      #introduce min/max limits to avoid changing things too sharply
+      g *= (1./acc) * min(0.8,max(0.1,(AccArr[:,lims[0]:lims[1]].sum() / np.float(lims[1]-lims[0]) / np.float(N))))
       gamma[i:] = g
       if n_gamma > 0: gamma[n_gamma::n_gamma] = g_glob #set every tenth gamma to (near) one to allow jumps between peaks
       # print "gam:",gamma[0]
@@ -341,7 +347,8 @@ def init_pars(p,e,n=1,type='norm'):
   if type == 'norm':
     samples = np.random.multivariate_normal(p,np.diag(e**2),n)
   if type == 'uniform':
-    samples = np.array([p + np.random.uniform(-0.5,0.5,p.size) * e for i in range(n)]).squeeze()
+    #samples = np.array([p + np.random.uniform(-0.5,0.5,p.size) * e for i in range(n)]).squeeze()
+    samples = np.array([p + np.random.uniform(-0.5,0.5,p.size) * e for i in range(n)])
   
   #set samples to be fixed where error is zero, to avoid numerical errors
   samples[:,np.where(np.isclose(e,0.))[0]] = p[np.where(np.isclose(e,0.))[0]]
@@ -353,7 +360,7 @@ def init_pars(p,e,n=1,type='norm'):
 def PrintBar(i,ch_file,ch_len,var_ch_len,AccArr,start,finish=False,extra_st="",end_st=""):
   ts = time.time()-start
   print("Running DEMC:" + extra_st)
-  a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(AccArr.flatten()[ch_len/5:i].sum())/(i-ch_len/5))
+  a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(AccArr.flatten()[ch_len/5:i].sum())/(i-ch_len/5.))
   print(u" chain: '%s' \033[31m%-21s\033[0m t = %dm %.2fs%s" % (ch_file,'#'*(i/(var_ch_len/20)+1),ts // 60., ts % 60.,a_str))
   sys.stdout.write('\033[{}A'.format(2))
   if finish: print("\n"*2 + end_st)
@@ -409,6 +416,28 @@ def ComputeGRs(ep,ParArr,conv=0):
   return GRs
 
 ##########################################################################################
+
+def AnalyseDEMC(file,burnin=40,n_gr=4,verbose=True):
+  """
+  Wrapper to call AnalyseChainsDEMC given a filename.
+  
+  """
+  if file[-4:] == '.npy':
+    X = np.load(file)
+  else:
+    X = np.load(file+'.npy')
+
+  #get chain length and n_pars from 2D array
+  ch_len = X.shape[0]
+  n_par = X.shape[1] - 1
+  burn = int(ch_len * 40 / 100.) #get burnin to filter out
+  
+  #reshape X into chains x ch_len pars
+  Pars = X[burn:,1:].reshape(-1,n_gr,n_par).transpose(1,0,2)
+  L = X[:burn,0] #get flattened likelihood array
+  
+  return AnalyseChainsDEMC(L,Pars,verbose=verbose)
+
 
 def AnalyseChainsDEMC(L,X,verbose=False):
   """

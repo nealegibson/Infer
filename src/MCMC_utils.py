@@ -377,13 +377,16 @@ def GelRub(chain_files,col,l):
 
 ###############################################################################
 
-def PlotCorrelations_im(conv_length,p=None,n_chains=None,chain_filenames=None,saveplot=False,filename="CorrelationPlot.pdf",labels=None,n_samples=500,cmap=None):
+def PlotCorrelations_im(conv_length,p=None,n_chains=None,chain_filenames=None,saveplot=False,filename="CorrelationPlot.pdf",labels=None,n_samples=500,cmap=None,\
+  left=0.07,bottom=0.07,right=0.93,top=0.93,wspace=0.0001,hspace=0.0001):
 
   #get chain names tuple
-  if n_chains == None and chain_filenames == None:
-    chain_filenames=["MCMC_chain.npy",]
+  if n_chains is None and chain_filenames is None:
+    chain_filenames=("MCMC_chain",)  
   if n_chains is not None:
-    chain_filenames = ["MCMC_chain_{}.npy".format(i+1) for i in range(n_chains)]
+    chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
+  if type(chain_filenames) is str:
+    chain_filenames = [chain_filenames,]
   
   print chain_filenames
   
@@ -399,7 +402,7 @@ def PlotCorrelations_im(conv_length,p=None,n_chains=None,chain_filenames=None,sa
       labels.append('p[%d]' % p[q]) 
   
   print no_pars
-  pylab.subplots_adjust(left=0.07,bottom=0.07,right=0.93,top=0.93,wspace=0.0001,hspace=0.0001)
+  pylab.subplots_adjust(left=left,bottom=bottom,right=right,top=top,wspace=wspace,hspace=hspace)
   
 #   Data = [0,0,0,0]
 #   index = [0,0,0,0]
@@ -418,6 +421,7 @@ def PlotCorrelations_im(conv_length,p=None,n_chains=None,chain_filenames=None,sa
         hdata = [pylab.hist(d[:,p[i]+1][conv_length:],20,histtype='step',normed=1,color='k') for d in Data]
         pylab.xlim(hdata[0][1].min(),hdata[0][1].max())
         pylab.ylim(0,hdata[0][0].max()*1.1)
+        #pylab.axis('off')
       else:
         #pylab.plot(Data[:,p[q]+1][index],Data[:,p[i]+1][index],'.',ms=3)
         temp_dat1 = np.concatenate([d[:,p[q]+1][conv_length:] for d in Data])
@@ -506,7 +510,7 @@ def DensityPlot(x,y,bins=(50,50),range=None,sigma=1.5,plot=False,interpolation='
   extent = None
   
   if plot:
-    pylab.imshow(np.sqrt(SH),extent=extent,origin='lower',interpolation=interpolation,cmap=cmap,vmin=0.0,vmax=1.)
+    pylab.imshow(np.sqrt(SH),extent=extent,origin='lower',interpolation=interpolation,cmap=cmap,vmin=0.0,vmax=1.,rasterized=1)
   if plot_contour:
     pylab.contour(SH,extent=extent,origin='lower',levels=(s2,s1),colors='k')
 #    pylab.contour(SH,extent=extent,origin='lower',levels=(s3,),colors='k')#,linestyles='dashed')
