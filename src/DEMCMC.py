@@ -175,7 +175,8 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
     assert Xsamp.shape == p_acc.shape, "shape of Xsamp array must match MCMC pars"
     p_acc = Xsamp
   else: 
-    p_acc = init_pars(p,e,N,init)
+#    p_acc = init_pars(p,e,N,init)
+    p_acc = init_pars(p,e*g,N,init)
   L_acc = np.array(map_func(logP,p_acc)) #compute posterior for starting positions
   
   # recompute any in restricted prior space
@@ -229,7 +230,6 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
     
     #could introduce a blocked Gibbs sampler here as well? to speed up GP sampling
     
-    
     for n in range(N): #accept the step?
       if RandNoArr[n][i] < np.exp(L_prop[n] - L_acc[n]):
         p_acc[n],L_acc[n] = p_prop[n],L_prop[n]
@@ -263,6 +263,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
       acc = 0.234 #target acceptance
       #rescale gamma for target acceptance
       #introduce min/max limits to avoid changing things too sharply
+#      g *= (1./acc) * (AccArr[:,lims[0]:lims[1]].sum() / np.float(lims[1]-lims[0]) / np.float(N))
       g *= (1./acc) * min(0.8,max(0.1,(AccArr[:,lims[0]:lims[1]].sum() / np.float(lims[1]-lims[0]) / np.float(N))))
       gamma[i:] = g
       if n_gamma > 0: gamma[n_gamma::n_gamma] = g_glob #set every tenth gamma to (near) one to allow jumps between peaks
@@ -360,7 +361,9 @@ def init_pars(p,e,n=1,type='norm'):
 def PrintBar(i,ch_file,ch_len,var_ch_len,AccArr,start,finish=False,extra_st="",end_st=""):
   ts = time.time()-start
   print("Running DEMC:" + extra_st)
-  a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(AccArr.flatten()[ch_len/5:i].sum())/(i-ch_len/5.))
+#  a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(AccArr.flatten()[ch_len/5:i].sum())/(i-ch_len/5.))
+  acc_flattened = AccArr[:,ch_len/5:i].flatten()
+  a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(acc_flattened.sum())/len(acc_flattened))
   print(u" chain: '%s' \033[31m%-21s\033[0m t = %dm %.2fs%s" % (ch_file,'#'*(i/(var_ch_len/20)+1),ts // 60., ts % 60.,a_str))
   sys.stdout.write('\033[{}A'.format(2))
   if finish: print("\n"*2 + end_st)

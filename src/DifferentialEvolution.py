@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 import numpy as np
 from scipy.optimize import differential_evolution
 
@@ -74,13 +76,13 @@ def DifferentialEvol(LogLikelihood,par,func_args,epar=None,bounds=None,type='max
   
   #redefine for fixed parameters
   if verbose:
-    print "-"*80
-    print "Differential Evolution parameter ranges:"
+    print ("-"*80)
+    print ("Differential Evolution parameter ranges:")
     for i in range(par.size):
-      print " p[{}] => {}".format(i,'fixed' if fixed[i] else bounds_var[(~fixed[:i]).sum()])
+      print (" p[{}] => {}".format(i,'fixed' if fixed[i] else bounds_var[(~fixed[:i]).sum()]))
   
   #run the DE algorithm, without finishing algorithm
-  if fixed.sum() == None:
+  if fixed.sum() == 0:
     fixed = None
     fixed_par = None
   DE = differential_evolution(OptFunc,bounds_var,args=(LogLikelihood,func_args,fixed,fixed_par),polish=False,**kwargs)
@@ -88,10 +90,10 @@ def DifferentialEvol(LogLikelihood,par,func_args,epar=None,bounds=None,type='max
 
   #print out results
   if verbose:
-    print "No of function evaluations = {}".format(DE.nfev)
-    print "Function value at optimum = {}".format(DE.fun)
-    print "DE {} @ {}".format(type,DE.x)
-    print "-"*80
+    print ("No of function evaluations = {}".format(DE.nfev))
+    print ("Function value at optimum = {}".format(DE.fun))
+    print ("DE {} @ {}".format(type,DE.x))
+    print ("-"*80)
   
   #now return the params in the correct order...
   if fixed is None or fixed.sum()==0:

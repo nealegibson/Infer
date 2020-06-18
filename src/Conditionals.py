@@ -80,6 +80,7 @@ def PlotSlice(LogLikelihood,par,low,upp,par_in,func_args=(),plot_samp=100):
   pylab.axhline(0.6065,color='g',ls='--')
   pylab.xlabel("p[%s]" % str(i))
   pylab.ylabel("Posterior")
+  return log_lik
 
 def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False,Nsig=3,Nloops=1):
   """

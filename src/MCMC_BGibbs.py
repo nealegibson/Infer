@@ -55,7 +55,7 @@ def BGMCMC(LogPosterior,gp,post_args,ch_len,ep,gibbs_index,chain_filenames='MCMC
     p,e = np.copy(gp),np.copy(ep)
     p_acc,L_acc = np.copy(p),-np.inf    
     #arrays for storing results
-    ParArr = np.zeros(ch_len/thin*len(p)).reshape(ch_len/thin,len(p))
+    ParArr = np.zeros((ch_len/thin)*len(p)).reshape(ch_len/thin,len(p))
     PostArr = np.zeros(ch_len/thin)
     AccArr = np.zeros(ch_len*no_steps).reshape(ch_len,no_steps) #acceptance rate for each Gibbs block
     
