@@ -12,6 +12,15 @@ leastsqbound.py was adapted from https://github.com/jjhelmus/leastsqbound-scipy/
 
 """
 
+#set multiprocessing behaviour for python3.8 or above
+import sys
+if sys.version_info >= (3, 8):
+  try:
+    import multiprocessing
+    multiprocessing.set_start_method("fork")
+  except:
+    pass
+
 from .MCMC import MCMC
 from .MCMC_SimN import MCMC_N
 from .MCMC_utils import *

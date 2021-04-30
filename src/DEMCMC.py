@@ -6,6 +6,12 @@ import sys
 import time
 import multiprocessing
 
+#this line required for python3.8+, due to change in default method
+#need to double check it doesn't break python 2 version
+#and there are I think more up to date methods to multiprocess with py3.8
+#multiprocessing.set_start_method("fork")
+#can only be called once - moved in __init__.py
+
 # try:
 #   import pathos
 #   pathos_available = True
@@ -177,7 +183,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
   else: 
 #    p_acc = init_pars(p,e,N,init)
     p_acc = init_pars(p,e*g,N,init)
-  L_acc = np.array(map_func(logP,p_acc)) #compute posterior for starting positions
+  L_acc = np.array(list(map_func(logP,p_acc))) #compute posterior for starting positions
   
   # recompute any in restricted prior space
   cull_list = []
@@ -224,7 +230,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
     #particular if pots split in 2
     #ie evaluation of multiple posteriors
 
-    L_prop = np.array(map_func(logP,p_prop))
+    L_prop = np.array(list(map_func(logP,p_prop)))
 #     for n in range(N): #should be easy to parallelise n here!
 #       L_prop[n] = logP(p_prop[n]) #calculate the posterior of at the proposal point
     
