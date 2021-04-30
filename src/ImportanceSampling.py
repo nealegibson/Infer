@@ -22,9 +22,9 @@ def ImportanceSamp(Posterior,post_args,m,K,no_samples,filename="ImSamp"):
   
   """
 
-  print "Importance Sampler runnning..."
-  print "Gaussian proposal"
-  print " No Samples: %d" % no_samples
+  print ("Importance Sampler runnning...")
+  print ("Gaussian proposal")
+  print (" No Samples: %d" % no_samples)
   
   #first compress matrix - ie remove non-variable columns, or we have a singular matrix
   no_pars = np.diag(K).size
@@ -54,8 +54,8 @@ def ImportanceSamp(Posterior,post_args,m,K,no_samples,filename="ImSamp"):
   
   #loop over samples and calculate the probabilities
   start = time.time() 
-  print '-' * 80
-  print "Sampling proposal distribution ",
+  print ('-' * 80)
+  print ("Sampling proposal distribution ",end='')
   for i in xrange(no_samples):
     if i % ((no_samples)/20) == 0: sys.stdout.write('.'); sys.stdout.flush();
     #calculate and store posterior (subtract Z_diff from logPost - same as dividing posterior by a constant)
@@ -63,8 +63,8 @@ def ImportanceSamp(Posterior,post_args,m,K,no_samples,filename="ImSamp"):
     #calculate and store proposal probability
     PropProb[i] = NormalDist(ms,invKs,logdetKs,SampArr[i])
     #print PostProb[i],PropProb[i]
-  print " t = %.2f s" % (time.time()-start)
-  print '-' * 80
+  print (" t = %.2f s" % (time.time()-start))
+  print ('-' * 80)
   
   #Calculate importance weights
   Weights = np.exp(PostProb - PropProb)
@@ -112,16 +112,16 @@ def AnalyseImportanceSamp(Z_diff=0,filename="ImSamp",filter=None):
     w = Weights / Weights.sum()
 
     #print out the mean, std per param and evidence
-    print ""
-    print "Sampled distribution:"
-    print " log Bayes evidence =", np.log(Z_ratio) + Z_diff
-    if Z_diff == 0: print "warning no Z_diff provided, evidence is probably wrong!"
-    print " par = mean +- gauss_err"
+    print ("")
+    print ("Sampled distribution:")
+    print (" log Bayes evidence =", np.log(Z_ratio) + Z_diff)
+    if Z_diff == 0: print ("warning no Z_diff provided, evidence is probably wrong!")
+    print (" par = mean +- gauss_err")
     mean,var = np.zeros(no_pars),np.zeros(no_pars)
     for i in range(no_pars): #loop over parameters and get parameters, errors, and GR statistic
       mean[i] = np.sum(w*FullSampArr[:,i][index])
       var[i] = np.sum(w*(FullSampArr[:,i][index]-mean[i])**2)
-      print " p[%d] = %.7f +- %.7f" % (i,mean[i],np.sqrt(var[i]))
+      print (" p[%d] = %.7f +- %.7f" % (i,mean[i],np.sqrt(var[i])))
 
   if filter==None: return np.log(Z_ratio) + Z_diff, mean, np.sqrt(var)
  
@@ -132,8 +132,8 @@ def BayesFactor(logE1, logE2, H1='H1', H2='H2'):
   Bayes_factor = np.exp(logE1-logE2)
   dB = 10*np.log(Bayes_factor if Bayes_factor>1. else 1./Bayes_factor)
 
-  print "Bayes factor O(%s/%s) = " % (H1,H2), Bayes_factor
-  print " %s favoured by dB = %f" % (H1 if Bayes_factor>1. else H2, dB)
+  print ("Bayes factor O(%s/%s) = " % (H1,H2), Bayes_factor)
+  print (" %s favoured by dB = %f" % (H1 if Bayes_factor>1. else H2, dB))
   
   return Bayes_factor, dB
 
@@ -161,12 +161,12 @@ def NormalFromMCMC(conv_length,n_chains=None,chain_filenames=None,plot=False,ret
   m = X[:,1:].mean(axis=0)
   K = np.cov(X[:,1:]-m,rowvar=0) #better to mean subtract first to avoid rounding errors
   
-  print "Gaussian approx:"
-  print " par = mean +- gauss_err"
+  print ("Gaussian approx:")
+  print (" par = mean +- gauss_err")
   for i in range(m.size): #loop over parameters and get parameters, errors, and GR statistic
-    print " p[%d] = %.7f +- %.7f" % (i,m[i],np.sqrt(K[i,i]))
+    print (" p[%d] = %.7f +- %.7f" % (i,m[i],np.sqrt(K[i,i])))
   
-  print "Gaussian Evidence approx:"
+  print ("Gaussian Evidence approx:")
   logP_max = X[:,0].max() # get maximum log posterior/likelihood
   #first must compress the covariance matrix as some parameters are fixed!
   var_par = np.diag(K)>0
@@ -176,22 +176,22 @@ def NormalFromMCMC(conv_length,n_chains=None,chain_filenames=None,plot=False,ret
   ms = m[var_par]
   sign,logdetK = np.linalg.slogdet( 2*np.pi*Ks ) # get log determinant
   logE = logP_max + 0.5 * logdetK #get evidence approximation based on Gaussian assumption
-  print "log ML =", logP_max
-  print "log E =", logE
+  print ("log ML =", logP_max)
+  print ("log E =", logE)
 
   if not N_obs:
     logE_BIC = logP_max
-    print " log E (BIC) = log ML - D/2.*np.log(N) =", logP_max, "- {}/2.*np.log(N)".format(D)
+    print (" log E (BIC) = log ML - D/2.*np.log(N) =", logP_max, "- {}/2.*np.log(N)".format(D))
   else:
     logE_BIC = logP_max - D/2.*np.log(N_obs)
-    print " log E (BIC) = log ML - D/2.*np.log(N) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs)
+    print (" log E (BIC) = log ML - D/2.*np.log(N) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs))
 
   if not N_obs:
     logE_AIC = logP_max - D
-    print " log E (AIC) = log ML - D =", logE_AIC, "(D = {})".format(D)
+    print (" log E (AIC) = log ML - D =", logE_AIC, "(D = {})".format(D))
   else:
     logE_AIC = logP_max - D * N_obs / (N_obs-D-1.)
-    print " log E (AIC) = log ML - DN/(N-D-1) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs)
+    print (" log E (AIC) = log ML - DN/(N-D-1) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs))
 
   if plot:
     p=np.where(np.diag(K)>0)[0]

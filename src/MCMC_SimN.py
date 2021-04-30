@@ -53,7 +53,7 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
   """
   
   #first set chain filenames
-  if N < 1: print "N must be at least 1!"; return
+  if N < 1: print ("N must be at least 1!"); return
   if N > 1: chain_filenames = ["MCMC_chain_%d" % ch_no for ch_no in range(1,N+1)]
   N = len(chain_filenames) # if chain_filenames are set instead of N, but N>1 overwrites with prev line
   
@@ -67,7 +67,7 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
   
   #print parameters at start of chain
   PrintParams(chain_filenames,var_ch_len,burn_in,ext_len,max_ext,LogPosterior,adapt_limits,glob_limits,gp,ep)
-  print '-' * 80
+  print ('-' * 80)
   
   #initialise parameters
   p,e = np.array([gp,]*N),np.array([ep,]*N)
@@ -162,36 +162,36 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
     np.save(chain+".npy",np.concatenate([PostArr[n].reshape(PostArr[n].size,1),ParArr[n]],axis=1))
   
   ####### end loop over chains ############
-  print '-' * 80
+  print ('-' * 80)
   
 ##########################################################################################
 
 def PrintBar(i,ch_files,ch_len,var_ch_len,AccArr,start,finish=False,extra_st="",end_st=""):
   ts = time.time()-start
   N = len(ch_files)
-  print "Running {} chains:".format(N) + extra_st
+  print ("Running {} chains:".format(N) + extra_st)
   for n in range(N):
     a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(AccArr[n][ch_len/5:i].sum())/(i-ch_len/5))
-    print u" chain %s: '%s' \033[31m%-21s\033[0m t = %dm %.2fs%s" % (n+1,ch_files[n],'#'*(i/(var_ch_len/20)+1),ts // 60., ts % 60.,a_str)
+    print (u" chain %s: '%s' \033[31m%-21s\033[0m t = %dm %.2fs%s" % (n+1,ch_files[n],'#'*(i/(var_ch_len/20)+1),ts // 60., ts % 60.,a_str))
   sys.stdout.write('\033[{}A'.format(N+1))
-  if finish: print "\n"*(N+1) + end_st
+  if finish: print ("\n"*(N+1) + end_st)
 
 ##########################################################################################
 
 def PrintParams(ch_filenames,ch_len,burn_in,ext_len,max_ext,posterior,adapt_limits,glob_limits,gp,ep):
 
-  print "Simultaneous MCMC chains runnning..."
-  print " No Chains: %d" % len(ch_filenames)
-  print " Chain Length: %d" % ch_len
-  print " Burn in: %d" % burn_in
-  print " Max {} extensions of length {}".format(max_ext,ext_len)
-  if(adapt_limits[2]): print " Relative-step adaption limits: (%d,%d,%d)" % (adapt_limits[0],adapt_limits[1],adapt_limits[2])
-  if(glob_limits[2]): print " Global-step adaption limits: (%d,%d,%d)" % (glob_limits[0],glob_limits[1],glob_limits[2])
-  print " Computing {} chains simultaneously: {}".format(len(ch_filenames),ch_filenames)
-  print " Posterior probability function: ", posterior
-  print " Function params <value prop_size>:"
+  print ("Simultaneous MCMC chains runnning...")
+  print (" No Chains: %d" % len(ch_filenames))
+  print (" Chain Length: %d" % ch_len)
+  print (" Burn in: %d" % burn_in)
+  print (" Max {} extensions of length {}".format(max_ext,ext_len))
+  if(adapt_limits[2]): print (" Relative-step adaption limits: (%d,%d,%d)" % (adapt_limits[0],adapt_limits[1],adapt_limits[2]))
+  if(glob_limits[2]): print (" Global-step adaption limits: (%d,%d,%d)" % (glob_limits[0],glob_limits[1],glob_limits[2]))
+  print (" Computing {} chains simultaneously: {}".format(len(ch_filenames),ch_filenames))
+  print (" Posterior probability function: ", posterior)
+  print (" Function params <value prop_size>:")
   for q in range(len(gp)):
-    print "  p[%d] = %f +- %f" % (q,gp[q],ep[q])
+    print ("  p[%d] = %f +- %f" % (q,gp[q],ep[q]))
 
 ##########################################################################################
 

@@ -31,9 +31,7 @@ def DEMCSpeedTest(logPost,gp,args,ep,N,parallel=False,n_p=4,init='norm'):
   
   p,e = np.array(gp),np.array(ep)    
   p_acc = init_pars(p,e,N,init)
-  L_acc = np.array(map_func(logP,p_acc)) #compute posterior for starting positions
-  
-#  print(p_acc)
+  L_acc = np.array(map_func(logP,p_acc)) #compute posterior
   
   if parallel: pool.close()
 

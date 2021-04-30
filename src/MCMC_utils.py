@@ -34,14 +34,14 @@ def AnalyseChains(conv_length,n_chains=None,chain_filenames=None,log_proposal=Fa
   pos_err = np.empty(no_pars)
   neg_err = np.empty(no_pars)
   
-  print "MCMC Marginalised distributions:"
-  print " par = mean gauss_err [med +err -err]: GR"
+  print ("MCMC Marginalised distributions:")
+  print (" par = mean gauss_err [med +err -err]: GR")
   for i in range(no_pars): #loop over parameters and get parameters, errors, and GR statistic
     mean[i],med,gauss_err[i],pos_err[i],neg_err[i],GR[i] = GelRub(chain_filenames,i+1,conv_length)
 #    log_p_str = u", \u0394logp = %f" % ((np.log10(mean[i]+pos_err) - np.log10(mean[i]-neg_err))/2.) if log_proposal else ""
 #    print u" p[%d] = %.7f \u00B1 %.7f [%.7f +%.7f -%.7f]: GR = %.4f%s" % (i,mean[i],gauss_err[i],med,pos_err,neg_err,GR,log_p_str)
     log_p_str = ", dlogp = %f" % ((np.log10(mean[i]+pos_err[i]) - np.log10(mean[i]-neg_err[i]))/2.) if log_proposal else ""
-    print " p[%d] = %.7f +- %.7f [%.7f +%.7f -%.7f]: GR = %.4f%s" % (i,mean[i],gauss_err[i],med,pos_err[i],neg_err[i],GR[i],log_p_str)
+    print (" p[%d] = %.7f +- %.7f [%.7f +%.7f -%.7f]: GR = %.4f%s" % (i,mean[i],gauss_err[i],med,pos_err[i],neg_err[i],GR[i],log_p_str))
   
   #return the Evidence approximation from Gaussian assumption
   #merge files into large matrix
@@ -60,22 +60,22 @@ def AnalyseChains(conv_length,n_chains=None,chain_filenames=None,log_proposal=Fa
 #  ms = m[var_par]
   sign,logdetK = np.linalg.slogdet( 2*np.pi*Ks ) # get log determinant
   logE = logP_max + 0.5 * logdetK #get evidence approximation based on Gaussian assumption
-  print "Gaussian Evidence approx:"
-  print " log ML =", logP_max
-  print " log E =", logE
+  print ("Gaussian Evidence approx:")
+  print (" log ML =", logP_max)
+  print (" log E =", logE)
   if not N_obs:
     logE_BIC = logP_max
-    print " log E (BIC) = log ML - D/2.*np.log(N) =", logP_max, "- {}/2.*np.log(N)".format(D)
+    print (" log E (BIC) = log ML - D/2.*np.log(N) =", logP_max, "- {}/2.*np.log(N)".format(D))
   else:
     logE_BIC = logP_max - D/2.*np.log(N_obs)
-    print " log E (BIC) = log ML - D/2.*np.log(N) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs)
+    print (" log E (BIC) = log ML - D/2.*np.log(N) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs))
   
   if not N_obs:
     logE_AIC = logP_max - D
-    print " log E (AIC) = log ML - D =", logE_AIC, "(D = {})".format(D)
+    print (" log E (AIC) = log ML - D =", logE_AIC, "(D = {})".format(D))
   else:
     logE_AIC = logP_max - D * N_obs / (N_obs-D-1.)
-    print " log E (AIC) = log ML - DN/(N-D-1) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs)
+    print (" log E (AIC) = log ML - DN/(N-D-1) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs))
   
   ret_list = [mean,gauss_err]
   if return_GR: ret_list.append(GR)
@@ -197,7 +197,7 @@ def PlotChains(conv_length,p=None,n_chains=None,chain_filenames=None,saveplot=Fa
       pylab.yticks([])
 
   if saveplot: #save the plots
-    print "Saving chain plots..."
+    print ("Saving chain plots...")
     pylab.savefig(filename)
   
 ###############################################################################
@@ -254,10 +254,10 @@ def PlotCorrelations(conv_length,p=None,n_chains=None,chain_filenames=None,savep
   if saveplot: #save the plots
     if type(filename) == list or type(filename) == tuple:
       for name in filename:
-        print "Saving correlation plot..."
+        print ("Saving correlation plot...")
         pylab.savefig(name,dpi=300)    
     else:
-      print "Saving correlation plot..."
+      print ("Saving correlation plot...")
       pylab.savefig(filename,dpi=300)
 
 ###############################################################################
@@ -300,7 +300,7 @@ def PlotCorrelations_inv(conv_length,p=None,n_chains=None,chain_filenames=None,s
       for q in range(i+1):
         pylab.subplot(no_pars,no_pars,(no_pars-i)*no_pars-q,xticks=[],yticks=[]) #select subplot
         
-        print i,q,no_pars,no_pars,(i+1)*no_pars-q
+        print (i,q,no_pars,no_pars,(i+1)*no_pars-q)
         
         if(i==q):
           hdata = pylab.hist(Data[:,p[i]+1][conv_length:],20,histtype='step',normed=1)   
@@ -318,10 +318,10 @@ def PlotCorrelations_inv(conv_length,p=None,n_chains=None,chain_filenames=None,s
   if saveplot: #save the plots
     if type(filename) == list or type(filename) == tuple:
       for name in filename:
-        print "Saving correlation plot..."
+        print ("Saving correlation plot...")
         pylab.savefig(name,dpi=300)    
     else:
-      print "Saving correlation plot..."
+      print ("Saving correlation plot...")
       pylab.savefig(filename,dpi=300)
 
 ###############################################################################
@@ -388,7 +388,7 @@ def PlotCorrelations_im(conv_length,p=None,n_chains=None,chain_filenames=None,sa
   if type(chain_filenames) is str:
     chain_filenames = [chain_filenames,]
   
-  print chain_filenames
+  print (chain_filenames)
   
   if p==None: #get total number of parmaeters if not supplied
     no_pars = np.load(chain_filenames[0])[0].size-1
@@ -401,7 +401,7 @@ def PlotCorrelations_im(conv_length,p=None,n_chains=None,chain_filenames=None,sa
     for q in range(no_pars):
       labels.append('p[%d]' % p[q]) 
   
-  print no_pars
+  print (no_pars)
   pylab.subplots_adjust(left=left,bottom=bottom,right=right,top=top,wspace=wspace,hspace=hspace)
   
 #   Data = [0,0,0,0]

@@ -38,10 +38,10 @@ def Optimise(LogLikelihood,par,func_args,fixed=None,type='max',method='NM',maxit
     Algorithm = NelderMead
     add_kwords = {'maxiter':maxiter, 'maxfun':maxfun,'verbose':verbose}
   elif method == 'CG':
-    print "warning: CG method didn't work properly during testing"
+    print ("warning: CG method didn't work properly during testing")
     Algorithm = ConjugateGradient
   elif method == 'P':
-    print "warning: Powell algorithm didn't work properly during testing"
+    print ("warning: Powell algorithm didn't work properly during testing")
     Algorithm = Powell
   elif method == 'BFGS':
 #    print "warning: Powell algorithm didn't work properly during testing"
@@ -51,14 +51,14 @@ def Optimise(LogLikelihood,par,func_args,fixed=None,type='max',method='NM',maxit
     Algorithm = L_BFGS_B
     add_kwords = {'verbose':verbose,'bounds':bounds}
   else:
-    print "error: optimisation function not found"
+    print ("error: optimisation function not found")
     return par
   
   #set the optimisation function to pos or neg for the fmin funcitons
   if type == 'max': OptFunc = NegFixedPar_func
   elif type == 'min': OptFunc = FixedPar_func
   else:
-    print "error: %s not a valid option" % type
+    print ("error: %s not a valid option" % type)
     return par
   
   #call the optimser with the appropriate function
@@ -114,54 +114,54 @@ def FixedPar_func(var_par,func,func_args,fixed=None,fixed_par=None,**kwargs):
 def NelderMead(ErrFunc, params0, function_args, maxiter=10000, maxfun=10000, verbose=True):
 
   if verbose:
-    print "-"*80
-    print "Running Nelder-Mead simplex algorithm... "
+    print ("-"*80)
+    print ("Running Nelder-Mead simplex algorithm... ")
     t0 = time.time()
   params = fmin(ErrFunc, params0, args=function_args,maxiter=maxiter, maxfun=maxfun)
   if verbose:
-    print "(Time: %f secs)" % (time.time()-t0)
-    print "Optimised parameters: ", params
-    print "-"*80
+    print ("(Time: %f secs)" % (time.time()-t0))
+    print ("Optimised parameters: ", params)
+    print ("-"*80)
   return params
 
 def Powell(ErrFunc, params0, function_args, verbose=True):
 
   if verbose:
-    print "-"*80
-    print "Running Powell's method minimisation... "
+    print ("-"*80)
+    print ("Running Powell's method minimisation... ")
     t0 = time.time()
   params = fmin_powell(ErrFunc, params0, args=function_args)
   if verbose:
-    print "(Time: %f secs)" % (time.time()-t0)
-    print "Optimised parameters: ", params
-    print "-"*80
+    print ("(Time: %f secs)" % (time.time()-t0))
+    print ("Optimised parameters: ", params)
+    print ("-"*80)
   return params
 
 def ConjugateGradient(ErrFunc, params0, function_args, verbose=True):
 
   if verbose:
-    print "-"*80
-    print "Running conjugate gradient minimisation... "
+    print ("-"*80)
+    print ("Running conjugate gradient minimisation... ")
     t0 = time.time()
   params = fmin_cg(ErrFunc, params0, args=function_args)
   if verbose:
-    print "(Time: %f secs)" % (time.time()-t0)
-    print "Optimised parameters: ", params
-    print "-"*80
+    print ("(Time: %f secs)" % (time.time()-t0))
+    print ("Optimised parameters: ", params)
+    print ("-"*80)
     
   return params
 
 def BFGS(ErrFunc, params0, function_args, verbose=True):
 
   if verbose:
-    print "-"*80
-    print "Running BFGS minimisation... "
+    print ("-"*80)
+    print ("Running BFGS minimisation... ")
     t0 = time.time()
   params = fmin_bfgs(ErrFunc, params0, args=function_args,full_output=1,gtol=1e-5)
   if verbose:
-    print "(Time: %f secs)" % (time.time()-t0)
-    print "Optimised parameters: ", params[0]
-    print "-"*80
+    print ("(Time: %f secs)" % (time.time()-t0))
+    print ("Optimised parameters: ", params[0])
+    print ("-"*80)
     
   return params[0]
 
@@ -171,15 +171,15 @@ def L_BFGS_B(ErrFunc, params0, function_args, verbose=True, **kw):
     indicates no upper/lower limit, or else add a limit. Haven't fully tested this
   """
   if verbose:
-    print "-"*80
-    print "Running L-BFGS-B minimisation... "
+    print ("-"*80)
+    print ("Running L-BFGS-B minimisation... ")
     t0 = time.time()
   params,min_val,dict  = fmin_l_bfgs_b(ErrFunc, params0,approx_grad=1, args=function_args, bounds=kw['bounds'])
-  print dict
+  print (dict)
   if verbose:
-    print "(Time: %f secs)" % (time.time()-t0)
-    print "Optimised parameters: ", params
-    print "-"*80
+    print ("(Time: %f secs)" % (time.time()-t0))
+    print ("Optimised parameters: ", params)
+    print ("-"*80)
     
   return params
 

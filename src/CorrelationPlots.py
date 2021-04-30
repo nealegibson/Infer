@@ -230,8 +230,8 @@ def CorrelationPlot(conv_length,p=None,inv=False,n_chains=None,chain_filenames=N
 #  CorrelationDensity(X[i],ax=ax)
   CorrelationDensity(X.reshape(-1,no_pars),ax=ax)
   
-  print X.shape
-  print ax.keys()
+  print (X.shape)
+  print (ax.keys())
   return X
   
     

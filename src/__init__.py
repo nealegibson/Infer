@@ -12,30 +12,30 @@ leastsqbound.py was adapted from https://github.com/jjhelmus/leastsqbound-scipy/
 
 """
 
-from MCMC import MCMC
-from MCMC_SimN import MCMC_N
-from MCMC_utils import *
-from ImportanceSampling import *
-from Conditionals import *
-from Optimiser import *
-from BruteForce import *
-from DifferentialEvolution import *
-from LevenbergMarquardt import *
+from .MCMC import MCMC
+from .MCMC_SimN import MCMC_N
+from .MCMC_utils import *
+from .ImportanceSampling import *
+from .Conditionals import *
+from .Optimiser import *
+from .BruteForce import *
+from .DifferentialEvolution import *
+from .LevenbergMarquardt import *
 #from LevenbergMarquardt2 import *
 
-from MCMC_BGibbs import *
-from AffInv_MCMC import *
-from DEMCMC import *
-import TestParallelSpeed
+from .MCMC_BGibbs import *
+from .AffInv_MCMC import *
+from .DEMCMC import *
+from . import TestParallelSpeed
 
-from InferGP import GP
-from InferMGP import MGP
-
-from GPUtils import *
-import GPRegression as GPR
-import GPCovarianceMatrix as GPC
-
-from GPKernelFunctions import *
-from GPPeriodicKernelFunctions import *
-
-from GPToeplitz import *
+# from .InferGP import GP
+# from .InferMGP import MGP
+# 
+# from .GPUtils import *
+# from . import GPRegression as GPR
+# from . import GPCovarianceMatrix as GPC
+# 
+# from .GPKernelFunctions import *
+# from .GPPeriodicKernelFunctions import *
+# 
+# from .GPToeplitz import *

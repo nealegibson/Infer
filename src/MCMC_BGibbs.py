@@ -39,7 +39,7 @@ def BGMCMC(LogPosterior,gp,post_args,ch_len,ep,gibbs_index,chain_filenames='MCMC
   
   #print parameters
   PrintParams(chain_filenames,ch_len,LogPosterior,adapt_limits,glob_limits,gp,ep,gibbs_index)
-  print '-' * 80
+  print ('-' * 80)
   
   #prep gibbs array
   gibbs = np.array(gibbs_index)
@@ -124,7 +124,7 @@ def BGMCMC(LogPosterior,gp,post_args,ch_len,ep,gibbs_index,chain_filenames='MCMC
     np.save(chain+".npy",np.concatenate([PostArr.reshape(PostArr.size,1),ParArr],axis=1))
 
   ####### end loop over chains ############
-  print '-' * 80
+  print ('-' * 80)
   
 ##########################################################################################
 
@@ -136,25 +136,25 @@ def PrintBar(n,chain,i,ch_len,AccArr,start,no_steps):
   else:
     a_str = "" if i <= ch_len/5 else ", acc = %.2f%%" % (100.*np.float(AccArr[ch_len/5:i].sum())/no_steps/(i-ch_len/5+1))
     a_str2 = "["+"".join(["%.2f%%," % (100.*np.float(AccArr[ch_len/5:i].sum(axis=0)[q])/(i-ch_len/5+1)) for q in range(no_steps)])+"\b]"
-  print "\rComputing Chain %d: '%s' %-20s t = %dm %.2fs%s" % (n+1,chain,'#'*(i/(ch_len/20)+1),ts // 60., ts % 60.,a_str),
-  print a_str2,
+  print ("\rComputing Chain %d: '%s' %-20s t = %dm %.2fs%s" % (n+1,chain,'#'*(i/(ch_len/20)+1),ts // 60., ts % 60.,a_str),)
+  print (a_str2,)
   sys.stdout.flush();
 
 ##########################################################################################
   
 def PrintParams(ch_filenames,ch_len,posterior,adapt_limits,glob_limits,gp,ep,gibbs):
 
-  print "Infer.BGMCMC runnning..."
-  print "Blocked Gibbs MCMC parameters:"
-  print " No Chains: %d" % len(ch_filenames)
-  print " Chain Length: %d" % ch_len
-  if(adapt_limits[2]): print " Relative-step adaption limits: (%d,%d,%d)" % (adapt_limits[0],adapt_limits[1],adapt_limits[2])
-  if(glob_limits[2]): print " Global-step adaption limits: (%d,%d,%d)" % (glob_limits[0],glob_limits[1],glob_limits[2])
-  print " Computing chains:", ch_filenames
-  print " Posterior probability function: ", posterior
-  print " Function params <value prop_size [block]>:"
+  print ("Infer.BGMCMC runnning...")
+  print ("Blocked Gibbs MCMC parameters:")
+  print (" No Chains: %d" % len(ch_filenames))
+  print (" Chain Length: %d" % ch_len)
+  if(adapt_limits[2]): print (" Relative-step adaption limits: (%d,%d,%d)" % (adapt_limits[0],adapt_limits[1],adapt_limits[2]))
+  if(glob_limits[2]): print (" Global-step adaption limits: (%d,%d,%d)" % (glob_limits[0],glob_limits[1],glob_limits[2]))
+  print (" Computing chains:", ch_filenames)
+  print (" Posterior probability function: ", posterior)
+  print (" Function params <value prop_size [block]>:")
   for q in range(len(gp)):
-    print "  p[%d] = %f +- %f [%d]" % (q,gp[q],ep[q],gibbs[q])
+    print ("  p[%d] = %f +- %f [%d]" % (q,gp[q],ep[q],gibbs[q]))
 
 ##########################################################################################
 

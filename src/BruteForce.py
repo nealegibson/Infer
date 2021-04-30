@@ -33,11 +33,11 @@ def Brute(LogLikelihood,par,func_args,epar,type='max',Nsig=3,Niter=1000,verbose=
   par_ranges = [slice(p-Nsig*e,p+(Nsig+delta)*e,2*Nsig*e/(Npoints-1.)) for p,e in zip(par,epar)]
   
   #redefine for fixed parameters
-  if verbose: print "Brute parameter ranges: ({:d} evaluations)".format(int(Npoints**Nvar))
+  if verbose: print ("Brute parameter ranges: ({:d} evaluations)".format(int(Npoints**Nvar)))
   for i,f in enumerate(fixed):
     if f == 1: #redefine slice so only actual par is taken
       par_ranges[i] = slice(par[i],par[i]+delta,0.1)
-    if verbose: print " p[{}] => {}".format(i,np.r_[par_ranges[i]])
+    if verbose: print (" p[{}] => {}".format(i,np.r_[par_ranges[i]]))
   
   assert type == 'max' or type == 'min', "type must be max or min"
   if type == 'max': OptFunc = NegFunc
@@ -47,7 +47,7 @@ def Brute(LogLikelihood,par,func_args,epar,type='max',Nsig=3,Niter=1000,verbose=
   B = brute(OptFunc,par_ranges,args=(LogLikelihood,func_args),full_output=1,finish=None)
   
   #print out results
-  if verbose: print "Brute force {} grid point @ {}\n".format(type,B[0])
+  if verbose: print ("Brute force {} grid point @ {}\n".format(type,B[0]))
 
   #return the optimised position
   return B[0]

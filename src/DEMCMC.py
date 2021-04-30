@@ -115,7 +115,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
   if N == None:
     N = max((np.array(ep) > 0).sum(),12)
   if N < 8 or (N % n_gr) > 0 or (N % 2) > 0:
-    print "error: N must be at least 8 and divisible by n_gr and 2 [={}]!".format(n_gr)
+    print ("error: N must be at least 8 and divisible by n_gr and 2 [={}]!".format(n_gr))
     return
   
   #set chain len and extension len of chain, default to chain length
@@ -362,9 +362,9 @@ def PrintBar(i,ch_file,ch_len,var_ch_len,AccArr,start,finish=False,extra_st="",e
   ts = time.time()-start
   print("Running DEMC:" + extra_st)
 #  a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(AccArr.flatten()[ch_len/5:i].sum())/(i-ch_len/5.))
-  acc_flattened = AccArr[:,ch_len/5:i].flatten()
-  a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(acc_flattened.sum())/len(acc_flattened))
-  print(u" chain: '%s' \033[31m%-21s\033[0m t = %dm %.2fs%s" % (ch_file,'#'*(i/(var_ch_len/20)+1),ts // 60., ts % 60.,a_str))
+  acc_flattened = AccArr[:,ch_len//5:i].flatten()
+  a_str = "" if i <= ch_len//5 else ", acc = %.2f%%  " % (100.*np.float(acc_flattened.sum())/len(acc_flattened))
+  print(u" chain: '%s' \033[31m%-21s\033[0m t = %dm %.2fs%s" % (ch_file,'#'*(i//(var_ch_len//20)+1),ts // 60., ts % 60.,a_str))
   sys.stdout.write('\033[{}A'.format(2))
   if finish: print("\n"*2 + end_st)
 
@@ -457,8 +457,8 @@ def AnalyseChainsDEMC(L,X,verbose=False):
   pos_err = np.empty(no_pars)
   neg_err = np.empty(no_pars)
 
-  print "MCMC Marginalised distributions:"
-  print " par = mean gauss_err [med +err -err]: GR"
+  print ("MCMC Marginalised distributions:")
+  print (" par = mean gauss_err [med +err -err]: GR")
   for i in range(no_pars): #loop over parameters and get parameters, errors, and GR statistic
     mean[i],gauss_err[i] = X[...,i].mean(),X[...,i].std()
     sorted_data = np.sort(X[...,i].flatten())
@@ -469,7 +469,7 @@ def AnalyseChainsDEMC(L,X,verbose=False):
   
   if verbose:
     for i in range(no_pars):
-      print " p[%d] = %.7f +- %.7f [%.7f +%.7f -%.7f]: GR = %.4f" % (i,mean[i],gauss_err[i],median[i],pos_err[i],neg_err[i],GR[i])
+      print (" p[%d] = %.7f +- %.7f [%.7f +%.7f -%.7f]: GR = %.4f" % (i,mean[i],gauss_err[i],median[i],pos_err[i],neg_err[i],GR[i]))
   
   #calculate evidence approximations
   m = X.reshape(-1,X.shape[-1]).mean(axis=0)
@@ -483,13 +483,13 @@ def AnalyseChainsDEMC(L,X,verbose=False):
   D = np.diag(Ks).size #no of dimensions
   sign,logdetK = np.linalg.slogdet( 2*np.pi*Ks ) # get log determinant
   logE = logP_max + 0.5 * logdetK #get evidence approximation based on Gaussian assumption
-  print "Gaussian Evidence approx:"
-  print " log ML =", logP_max
-  print " log E =", logE
+  print ("Gaussian Evidence approx:")
+  print (" log ML =", logP_max)
+  print (" log E =", logE)
   logE_BIC = logP_max
-  print " log E (BIC) = log ML - D/2.*np.log(N) =", logP_max, "- {}/2.*np.log(N)".format(D)
+  print (" log E (BIC) = log ML - D/2.*np.log(N) =", logP_max, "- {}/2.*np.log(N)".format(D))
   logE_AIC = logP_max - D
-  print " log E (AIC) = log ML - D =", logE_AIC, "(D = {})".format(D)
+  print (" log E (AIC) = log ML - D =", logE_AIC, "(D = {})".format(D))
     
   return mean,gauss_err
 

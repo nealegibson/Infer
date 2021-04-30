@@ -4,7 +4,7 @@ import time
 from scipy.optimize import fmin,brute,fmin_cg,fmin_powell
 from scipy.optimize import leastsq,least_squares
 
-from leastsqbound import leastsqbound
+from .leastsqbound import leastsqbound
 
 ##########################################################################################
 
@@ -114,11 +114,11 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
   wn = np.std(resid)
   
   if verbose:
-    print "-"*80
-    print "LM fit parameter estimates: (function evals: {})".format(nfev)
-    print " par = mean +- err"
-    for i in range(bf_par.size): print " p[{}] = {:.8f} +- {:.8f}".format(i,bf_par[i],err_par[i])
-    print "white noise =", wn
+    print ("-"*80)
+    print ("LM fit parameter estimates: (function evals: {})".format(nfev))
+    print (" par = mean +- err")
+    for i in range(bf_par.size): print (" p[{}] = {:.8f} +- {:.8f}".format(i,bf_par[i],err_par[i]))
+    print ("white noise =", wn)
   
   #calculate the log evidence for the best fit model
   if fix_noise: logP_max = LogLikelihood_iid(resid,1.,err)
@@ -137,12 +137,12 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
     Kn = np.insert(np.insert(K,ind,0,axis=0),ind,0,axis=1) #insert zeros corresponding to fixed pars
   
   if verbose:
-    print "Gaussian Evidence approx:"
-    print " log ML =", logP_max
-    print " log E =", logE
-    print " log E (BIC) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs)
-    print " log E (AIC) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs)
-    print "-"*80
+    print ("Gaussian Evidence approx:")
+    print (" log ML =", logP_max)
+    print (" log E =", logE)
+    print (" log E (BIC) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs))
+    print (" log E (AIC) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs))
+    print ("-"*80)
   
   ret_list = [bf_par,err_par,rescale,Kn,logE]
   if return_BIC: ret_list.append(logE_BIC)

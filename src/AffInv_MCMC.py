@@ -19,7 +19,7 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
   
   #print parameters
   PrintParams(chain_filenames,n,ch_len,LogPosterior,gp,ep)
-  print '-' * 80
+  print ('-' * 80)
   
   ####### loop over chains ###############
   for n_ch,chain in enumerate(chain_filenames):
@@ -55,7 +55,7 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
       while L_acc[q] == -np.inf:
         no_recomp += 1
         if no_recomp > 20:
-          print "warning: after 20 attempts walker {} still initiated in restricted prior space!".format(q+1)
+          print ("warning: after 20 attempts walker {} still initiated in restricted prior space!".format(q+1))
           break
         p_arr[q] = np.random.normal(0,1,no_pars) * e + p
         L_acc[q] = LogPosterior(p_arr[q],*post_args)
@@ -63,8 +63,8 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
     #randomly reassign starting points to good ones where left in restricted prior space
     #after resampling
     if np.any(L_acc == -np.inf):
-      print "warning: some walkers are initialised in restricted posterior space."
-      print "reassigning them - check input uncertainties are ok!"
+      print ("warning: some walkers are initialised in restricted posterior space.")
+      print ("reassigning them - check input uncertainties are ok!")
       inf_ind = np.where(L_acc == -np.inf)[0]
       good_ind = np.where(L_acc != -np.inf)[0]
       #loop over bad points
@@ -126,12 +126,12 @@ def AffInvMCMC(LogPosterior,gp,post_args,n,ch_len,ep,chain_filenames=['MCMC_chai
 #       ParArr[i*n:(i+1)*n],PostArr[i*n:(i+1)*n] = p_arr,L_acc
                 
     ####### end individual chain ###########
-    PrintBar(n_ch,chain,(i+1)*n-1,ch_len*n,start,AccArr); print
+    PrintBar(n_ch,chain,(i+1)*n-1,ch_len*n,start,AccArr); print()
     np.save(chain+".npy",np.concatenate([PostArr.reshape(PostArr.size,1),ParArr],axis=1))
     #np.savetxt(chain,np.concatenate([PostArr.reshape(PostArr.size,1),ParArr],axis=1))
   
   ####### end loop over chains ############
-  print '-' * 80
+  print ('-' * 80)
   
 ##########################################################################################
 
@@ -146,24 +146,24 @@ def PrintBar(n,chain,i,ch_len,start,AccArr):
   "Print the status bar - probably a more elegant way to write this..."
   ts = time.time()-start
   a_str = "" if i <= ch_len/5 else ", acc = %.2f%%" % (100.*np.float(AccArr[ch_len/5:i].sum())/(i-ch_len/5+1))
-  print "\rComputing Chain %d: '%s' %-20s t = %dm %.2fs%s " % (n+1,chain,'#'*(i/(ch_len/20)+1),ts // 60., ts % 60.,a_str),
+  print ("\rComputing Chain %d: '%s' %-20s t = %dm %.2fs%s " % (n+1,chain,'#'*(i/(ch_len/20)+1),ts // 60., ts % 60.,a_str),end='')
   sys.stdout.flush();
 
 ##########################################################################################
 
 def PrintParams(ch_filenames,n,ch_len,posterior,gp,ep):
 
-  print "Infer.AffInvMCMC running..."
-  print "MCMC parameters:"
-  print " No Chains: %d" % len(ch_filenames)
-  print " No walkers: %d" % n
-  print " No free parameters: %d" % (np.array(ep)>0).sum()
-  print " Chain Length: %d" % ch_len
-  print " Posterior evaluations: %d" % (ch_len*n)
-  print " Computing chains:", ch_filenames
-  print " Posterior probability function: ", posterior
-  print " Function params <value prop_size>:"
+  print ("Infer.AffInvMCMC running...")
+  print ("MCMC parameters:")
+  print (" No Chains: %d" % len(ch_filenames))
+  print (" No walkers: %d" % n)
+  print (" No free parameters: %d" % (np.array(ep)>0).sum())
+  print (" Chain Length: %d" % ch_len)
+  print (" Posterior evaluations: %d" % (ch_len*n))
+  print (" Computing chains:", ch_filenames)
+  print (" Posterior probability function: ", posterior)
+  print (" Function params <value prop_size>:")
   for q in range(len(gp)):
-    print "  p[%d] = %f +- %f" % (q,gp[q],ep[q])
+    print ("  p[%d] = %f +- %f" % (q,gp[q],ep[q]))
 
 ##########################################################################################

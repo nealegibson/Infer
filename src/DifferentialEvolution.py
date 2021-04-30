@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import numpy as np
 from scipy.optimize import differential_evolution
+import time
 
 ##########################################################################################
 
@@ -85,12 +86,17 @@ def DifferentialEvol(LogLikelihood,par,func_args,epar=None,bounds=None,type='max
   if fixed.sum() == 0:
     fixed = None
     fixed_par = None
+    
+  #execute the DE algorithm and time
+  t_start = time.time()
   DE = differential_evolution(OptFunc,bounds_var,args=(LogLikelihood,func_args,fixed,fixed_par),polish=False,**kwargs)
   fitted_par = DE.x
+  t_end = time.time()
 
   #print out results
   if verbose:
     print ("No of function evaluations = {}".format(DE.nfev))
+    print ("Time: {} secs".format(t_end-t_start))
     print ("Function value at optimum = {}".format(DE.fun))
     print ("DE {} @ {}".format(type,DE.x))
     print ("-"*80)

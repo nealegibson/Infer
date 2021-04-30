@@ -45,7 +45,7 @@ def MCMC(LogPosterior,gp,post_args,ch_len,ep,chain_filenames=['MCMC_chain'],n_ch
   
   #print parameters
   PrintParams(chain_filenames,ch_len,LogPosterior,adapt_limits,glob_limits,gp,ep)
-  print '-' * 80
+  print ('-' * 80)
   
   ####### loop over chains ###############
   for n,chain in enumerate(chain_filenames):
@@ -109,7 +109,7 @@ def MCMC(LogPosterior,gp,post_args,ch_len,ep,chain_filenames=['MCMC_chain'],n_ch
     np.save(chain+".npy",np.concatenate([PostArr.reshape(PostArr.size,1),ParArr],axis=1))
   
   ####### end loop over chains ############
-  print '-' * 80
+  print ('-' * 80)
   
 ##########################################################################################
 
@@ -117,24 +117,24 @@ def PrintBar(n,chain,i,ch_len,AccArr,start):
   "Print the status bar - probably a more elegant way to write this..."
   ts = time.time()-start
   a_str = "" if i <= ch_len/5 else ", acc = %.2f%%" % (100.*np.float(AccArr[ch_len/5:i].sum())/(i-ch_len/5+1))
-  print "\rComputing Chain %d: '%s' %-20s t = %dm %.2fs%s" % (n+1,chain,'#'*(i/(ch_len/20)+1),ts // 60., ts % 60.,a_str),
+  print ("\rComputing Chain %d: '%s' %-20s t = %dm %.2fs%s" % (n+1,chain,'#'*(i/(ch_len/20)+1),ts // 60., ts % 60.,a_str),end='')
   sys.stdout.flush();
 
 ##########################################################################################
 
 def PrintParams(ch_filenames,ch_len,posterior,adapt_limits,glob_limits,gp,ep):
 
-  print "Infer.MCMC runnning..."
-  print "MCMC parameters:"
-  print " No Chains: %d" % len(ch_filenames)
-  print " Chain Length: %d" % ch_len
-  if(adapt_limits[2]): print " Relative-step adaption limits: (%d,%d,%d)" % (adapt_limits[0],adapt_limits[1],adapt_limits[2])
-  if(glob_limits[2]): print " Global-step adaption limits: (%d,%d,%d)" % (glob_limits[0],glob_limits[1],glob_limits[2])
-  print " Computing chains:", ch_filenames
-  print " Posterior probability function: ", posterior
-  print " Function params <value prop_size>:"
+  print ("Infer.MCMC runnning...")
+  print ("MCMC parameters:")
+  print (" No Chains: %d" % len(ch_filenames))
+  print (" Chain Length: %d" % ch_len)
+  if(adapt_limits[2]): print (" Relative-step adaption limits: (%d,%d,%d)" % (adapt_limits[0],adapt_limits[1],adapt_limits[2]))
+  if(glob_limits[2]): print (" Global-step adaption limits: (%d,%d,%d)" % (glob_limits[0],glob_limits[1],glob_limits[2]))
+  print (" Computing chains:", ch_filenames)
+  print (" Posterior probability function: ", posterior)
+  print (" Function params <value prop_size>:")
   for q in range(len(gp)):
-    print "  p[%d] = %f +- %f" % (q,gp[q],ep[q])
+    print ("  p[%d] = %f +- %f" % (q,gp[q],ep[q]))
 
 ##########################################################################################
 

@@ -5,7 +5,7 @@ import pylab
 from scipy.optimize import fmin,brute,fmin_cg,fmin_powell
 from scipy.optimize import fsolve,brentq
 
-from Optimiser import *
+from .Optimiser import *
 
 def FixedPar_func_offset(var_par,max_loglik,*arglist):
   """
@@ -67,7 +67,7 @@ def PlotSlice(LogLikelihood,par,low,upp,par_in,func_args=(),plot_samp=100):
   for q,par_val in enumerate(par_range):
     temp_par[i] = par_val
     log_lik[q] = LogLikelihood(temp_par,*func_args)
-  print np.exp(log_lik-max_loglik)
+  print (np.exp(log_lik-max_loglik))
   pylab.clf()
   pylab.subplot(211)
   pylab.plot(par_range,log_lik)
@@ -82,7 +82,7 @@ def PlotSlice(LogLikelihood,par,low,upp,par_in,func_args=(),plot_samp=100):
   pylab.ylabel("Posterior")
   return log_lik
 
-def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False,Nsig=3,Nloops=1):
+def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False,Nsig=3,Nloops=1,savefig=False):
   """
   Function to find the range of conditional distributions for each variable parameter, ie
   vary each parameter until delta chi_2 = 1.
@@ -148,6 +148,7 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
           temp_par[i] = par_val
           log_lik[q] = LogLikelihood(temp_par,*func_args)
         pylab.clf()
+        ax = pylab.gca()
         pylab.plot(par_range,log_lik)
         pylab.plot(par_range,max_loglik-(par_range-op_par[i])**2/2./av_err[i]**2,'r--')
         pylab.axvline(op_par[i],color='r')
@@ -158,8 +159,10 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
         pylab.axhline(max_loglik,color='r',ls='--')
         pylab.xlabel("p[%s]" % str(i))
         pylab.ylabel("log Posterior")
+        pylab.text(1,0.8,"par = {} +- {}".format(op_par[i], err_pos[i]),transform=ax.transAxes)
         #print "mean (+-) = ", op_par[i], err_pos[i], err_neg[i],
         pylab.draw()
+        if savefig: plt.savefig("ConditionalErrors_par{}.pdf".format(i))
         raw_input()
 
   return op_par,(np.abs(err_pos)+np.abs(err_neg))/2.
