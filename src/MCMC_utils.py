@@ -243,7 +243,7 @@ def PlotCorrelations(conv_length,p=None,n_chains=None,chain_filenames=None,savep
         pylab.subplot(no_pars,no_pars,i*no_pars+q+1,xticks=[],yticks=[]) #select subplot
         
         if(i==q):
-          hdata = pylab.hist(Data[:,p[i]+1][conv_length:],20,histtype='step',normed=1)   
+          hdata = pylab.hist(Data[:,p[i]+1][conv_length:],20,histtype='step',density=1)   
           pylab.xlim(hdata[1].min(),hdata[1].max())
           pylab.ylim(0,hdata[0].max()*1.1)
         else: pylab.plot(Data[:,p[q]+1][index],Data[:,p[i]+1][index],'.')
@@ -303,7 +303,7 @@ def PlotCorrelations_inv(conv_length,p=None,n_chains=None,chain_filenames=None,s
         print (i,q,no_pars,no_pars,(i+1)*no_pars-q)
         
         if(i==q):
-          hdata = pylab.hist(Data[:,p[i]+1][conv_length:],20,histtype='step',normed=1)   
+          hdata = pylab.hist(Data[:,p[i]+1][conv_length:],20,histtype='step',density=1)   
           pylab.xlim(hdata[1].min(),hdata[1].max())
           pylab.ylim(0,hdata[0].max()*1.1)
         else: pylab.plot(Data[:,p[q]+1][index],Data[:,p[i]+1][index],'.')
@@ -418,7 +418,7 @@ def PlotCorrelations_im(conv_length,p=None,n_chains=None,chain_filenames=None,sa
       pylab.subplot(no_pars,no_pars,i*no_pars+q+1,xticks=[],yticks=[]) #select subplot
       
       if(i==q):
-        hdata = [pylab.hist(d[:,p[i]+1][conv_length:],20,histtype='step',normed=1,color='k') for d in Data]
+        hdata = [pylab.hist(d[:,p[i]+1][conv_length:],20,histtype='step',density=1,color='k') for d in Data]
         pylab.xlim(hdata[0][1].min(),hdata[0][1].max())
         pylab.ylim(0,hdata[0][0].max()*1.1)
         #pylab.axis('off')

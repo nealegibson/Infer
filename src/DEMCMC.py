@@ -5,7 +5,12 @@ np.seterr(all='ignore') #ignore errors in log division
 import sys
 import time
 import multiprocessing
-
+import sys
+if sys.version_info >= (3, 8):
+  #this basically creates a copy of the multiprocessing API with fork context
+  #means I don't conflict with the existing multiprocessing method called
+  #resetting the method via set_start_method can only be done once!
+  multiprocessing = multiprocessing.get_context("fork")
 #this line required for python3.8+, due to change in default method
 #need to double check it doesn't break python 2 version
 #and there are I think more up to date methods to multiprocess with py3.8
@@ -108,6 +113,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
   
   #select map function depending on parallelise behaviour
   if parallel: #to parallelise with multiprocessing needs to pickle
+    if n_p is None: n_p = multiprocessing.cpu_count()//2 # use number of physical cores by default
     pool = multiprocessing.Pool(n_p)
     map_func = pool.map
   else:
@@ -446,7 +452,6 @@ def AnalyseDEMC(file,burnin=40,n_gr=4,verbose=True):
   L = X[:burn,0] #get flattened likelihood array
   
   return AnalyseChainsDEMC(L,Pars,verbose=verbose)
-
 
 def AnalyseChainsDEMC(L,X,verbose=False):
   """

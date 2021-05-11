@@ -5,12 +5,12 @@ np.seterr(all='ignore') #ignore errors in log division
 import sys
 import time
 import multiprocessing
-#this line required for python3.8+, due to change in default method
-#need to double check it doesn't break python 2 version
-#and there are I think more up to date methods to multiprocess with py3.8
-#multiprocessing.set_start_method("fork")
-#moved to init file, can only be called once
-#also needed to change list(map) as map now returns an iterator
+import sys
+if sys.version_info >= (3, 8):
+  #this basically creates a copy of the multiprocessing API with fork context
+  #means I don't conflict with the existing multiprocessing method called
+  #resetting the method via set_start_method can only be done once!
+  multiprocessing = multiprocessing.get_context("fork")
 
 def logP(pars):
   return LogPosterior(pars,*post_args)

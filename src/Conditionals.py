@@ -5,6 +5,10 @@ import pylab
 from scipy.optimize import fmin,brute,fmin_cg,fmin_powell
 from scipy.optimize import fsolve,brentq
 
+import sys
+if sys.version_info >= (3,):
+  raw_input = input #need to add raw_input
+
 from .Optimiser import *
 
 def FixedPar_func_offset(var_par,max_loglik,*arglist):
