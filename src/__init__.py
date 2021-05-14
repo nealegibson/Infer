@@ -38,6 +38,9 @@ from .AffInv_MCMC import *
 from .DEMCMC import *
 from . import TestParallelSpeed
 
+from .CorrelationPlots import *
+
+
 # from .InferGP import GP
 # from .InferMGP import MGP
 # 

@@ -67,8 +67,8 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
     var_par = par[np.where(fixed!=True)]
   
   #set error vector if not provided
-  if err is None: err = np.ones(y.size)
-  else: err = err * np.ones(y.size)
+  if err is None: err = np.ones_like(y)
+  else: err = err * np.ones_like(y)
   
   #get the bounds for variable parameters
   if bounds is None:
@@ -178,7 +178,8 @@ def LM_ErrFunc(var_par,func,func_args,y,err,fixed=None,fixed_par=None):
   
   """
   
-  return (y - FixedPar_func(var_par,func,func_args,fixed,fixed_par)) / err
+  #use ravel to enable multidimensional fitting
+  return np.ravel((y - FixedPar_func(var_par,func,func_args,fixed,fixed_par)) / err)
 
 ##########################################################################################
 def FixedPar_func(var_par,func,func_args,fixed=None,fixed_par=None,**kwargs):

@@ -177,7 +177,7 @@ def DEMC(logPost,gp,args,ch_len,ep=None,N=None,chain_filename='MCMC_chain.npy',b
   else: #for parallel execution, divide into two groups, and simply pick from other group
     rc = np.random.random((ch_len,N,N//2)).argsort(axis=2)[:,:,:2]
     rc[:,:N//2] += N//2
-    print("\x1B[3m(running in parallel with {} cores)\x1B[23m".format(multiprocessing.cpu_count() if n_p == None else n_p))
+    print("\x1B[3m(running in parallel with {} cores)\x1B[23m".format(n_p))
     
   ####### loop over chain generations ###############
   start = time.time()

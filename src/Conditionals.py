@@ -52,7 +52,7 @@ def PlotConditionals(LogLikelihood,par,err,low,upp,func_args=(),plot_samp=100,op
    pylab.xlabel("p[%s]" % str(i))
    pylab.ylabel("log Posterior")
    #pylab.xlims(low[i],upp[i])
-   if wait: raw_input("")  
+   if wait: raw_input("continue?")  
 
 def PlotSlice(LogLikelihood,par,low,upp,par_in,func_args=(),plot_samp=100):
   """
@@ -75,7 +75,8 @@ def PlotSlice(LogLikelihood,par,low,upp,par_in,func_args=(),plot_samp=100):
   pylab.clf()
   pylab.subplot(211)
   pylab.plot(par_range,log_lik)
-  pylab.axhline(max_loglik-0.5,color='g',ls='--')
+  pylab.axhline(max_loglik,color='r',ls='--',lw=0.5)
+  pylab.axhline(max_loglik-0.5,color='g',ls='--',lw=0.5)
   pylab.xlabel("p[%s]" % str(i))
   pylab.ylabel("log Posterior")
   pylab.subplot(212)
@@ -167,7 +168,7 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
         #print "mean (+-) = ", op_par[i], err_pos[i], err_neg[i],
         pylab.draw()
         if savefig: plt.savefig("ConditionalErrors_par{}.pdf".format(i))
-        raw_input()
+        raw_input("continue?")
 
   return op_par,(np.abs(err_pos)+np.abs(err_neg))/2.
 
