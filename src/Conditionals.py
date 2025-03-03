@@ -2,6 +2,7 @@
 import numpy as np
 import time
 import pylab
+import matplotlib.pyplot as plt
 from scipy.optimize import fmin,brute,fmin_cg,fmin_powell
 from scipy.optimize import fsolve,brentq
 
@@ -87,6 +88,93 @@ def PlotSlice(LogLikelihood,par,low,upp,par_in,func_args=(),plot_samp=100):
   pylab.ylabel("Posterior")
   return log_lik
 
+# def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False,Nsig=3,Nloops=1,savefig=False):
+#   """
+#   Function to find the range of conditional distributions for each variable parameter, ie
+#   vary each parameter until delta chi_2 = 1.
+#   
+#   Cycles through each parameter in turn, optimises with respect to that parameter and then
+#   finds where the log likelihood changes by -0.5 in each direction. Returns the average
+#   of the plus/minus errors plus the new optimised values. Optionally optimise the function
+#   with respect to all variables to start.
+#   
+#   LogLikelihood - Log likelihood function
+#   par - parameter array
+#   err - error array, used to determine the variables and provides guesses for the root
+#     finder
+#   func_args - tuple of function arguments
+#   plot - make plots of each dimension
+#   plot_samp - no of samples for each plot
+#   opt - do global optimisation to start?
+#   
+#   """
+#   
+#   #first optimise the log likelihood?
+#   if opt: op_par = Optimise(LogLikelihood,par[:],func_args,fixed=(np.array(err) == 0)*1)
+#   else: op_par = np.copy(par)
+#   old_op_par = np.copy(op_par)
+#   err_pos = np.copy(err)
+#   err_neg = np.copy(err)
+#   
+#   #loop Nloops times
+#   for loop in range(Nloops):
+#     #loop through the variables
+#     for i in np.where(np.array(err) != 0.)[0]:
+#     
+#       #create fixed and var par arrays
+#       fixed = (np.arange(len(err))!=i)*1
+#       fixed_par = op_par[np.where(fixed==True)]
+#       var_par = op_par[np.where(fixed!=True)]
+# 
+#       #for each dimension, optimise and solve for logL = logL_max - 0.5
+#       old_op_par = np.copy(op_par) #store old opt pars for plotting
+#       op_par = Optimise(LogLikelihood,op_par,func_args,fixed=fixed,verbose=False)
+#       max_loglik = LogLikelihood(op_par,*func_args)
+#       
+#       #find where logLikelihood changes by 0.5 using root finding
+#       #err_pos[i] = fsolve(FixedPar_func_offset,op_par[i]+err_pos[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
+#       
+#       #use bracketed search to avoid infs - first ensure that bracket leads to negative f(x)
+#       delta = 2.*err_pos[i] #first set to twice the uncertainty
+#       while FixedPar_func_offset(op_par[i]+delta,max_loglik,LogLikelihood,func_args,fixed,fixed_par) > 0.:
+#         delta *= 2
+#       #now use bracketed search to find the root
+#       err_pos[i] = brentq(FixedPar_func_offset,op_par[i],op_par[i]+delta,(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) - op_par[i]
+#       
+#       #err_neg[i] = op_par[i] - fsolve(FixedPar_func_offset,op_par[i]-err_neg[i],(max_loglik,LogLikelihood,func_args,fixed,fixed_par)) 
+#       #just copy positive error, as messes up for bounded priors
+#       err_neg[i] = np.copy(err_pos[i])
+#       av_err = (np.abs(err_pos)+np.abs(err_neg))/2.
+#       
+#       if plot: #make plots of the conditionals with max and limits marked
+#         par_range = np.linspace(op_par[i]-Nsig*err_neg[i],op_par[i]+Nsig*err_pos[i],plot_samp)
+#         log_lik = np.zeros(plot_samp)
+#         temp_par = np.copy(op_par)
+#         for q,par_val in enumerate(par_range):
+#           temp_par[i] = par_val
+#           log_lik[q] = LogLikelihood(temp_par,*func_args)
+#         pylab.clf()
+#         ax = pylab.gca()
+#         pylab.plot(par_range,log_lik)
+#         pylab.plot(par_range,max_loglik-(par_range-op_par[i])**2/2./av_err[i]**2,'r--')
+#         pylab.axvline(op_par[i],color='r')
+#         pylab.axvline(old_op_par[i],color='0.5',ls='--')
+#         pylab.axvline(op_par[i]+err_pos[i],color='g')
+#         pylab.axvline(op_par[i]-err_neg[i],color='g')
+#         pylab.axhline(max_loglik-0.5,color='g',ls='--')
+#         pylab.axhline(max_loglik,color='r',ls='--')
+#         pylab.xlabel("p[%s]" % str(i))
+#         pylab.ylabel("log Posterior")
+#         pylab.text(1,0.8,"par = {} +- {}".format(op_par[i], err_pos[i]),transform=ax.transAxes)
+#         #print "mean (+-) = ", op_par[i], err_pos[i], err_neg[i],
+#         pylab.draw()
+#         if savefig: plt.savefig("ConditionalErrors_par{}.pdf".format(i))
+#         raw_input("continue?")
+# 
+#   return op_par,(np.abs(err_pos)+np.abs(err_neg))/2.
+
+##########################################################################################
+
 def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=100,opt=False,Nsig=3,Nloops=1,savefig=False):
   """
   Function to find the range of conditional distributions for each variable parameter, ie
@@ -115,10 +203,23 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
   err_pos = np.copy(err)
   err_neg = np.copy(err)
   
+  if plot:
+    N = np.sum(err>0)
+    ncol = 3 if N<10 else 4
+#    ncol_final = N%ncol
+    nrow = N//ncol + (1 if N%ncol > 0 else 0)
+    f = plt.figure()    
+    
+    if N<=ncol:
+      axes = [f.add_subplot(1,N,i+1) for i in range(N)]
+    else:
+      axes = [f.add_subplot(nrow,ncol,i+1) for i in range(N)]
+    #[(nrow,ncol,i+1) if i < (nrow-1)*ncol else (nrow,ncol_final,i-(nrow-1)*ncol+(nrow-1)*ncol_final+1) for i in range(N)]  
+    
   #loop Nloops times
   for loop in range(Nloops):
     #loop through the variables
-    for i in np.where(np.array(err) != 0.)[0]:
+    for j,i in enumerate(np.where(np.array(err) != 0.)[0]):
     
       #create fixed and var par arrays
       fixed = (np.arange(len(err))!=i)*1
@@ -152,23 +253,20 @@ def ConditionalErrors(LogLikelihood,par,err,func_args=(),plot=False,plot_samp=10
         for q,par_val in enumerate(par_range):
           temp_par[i] = par_val
           log_lik[q] = LogLikelihood(temp_par,*func_args)
-        pylab.clf()
-        ax = pylab.gca()
-        pylab.plot(par_range,log_lik)
-        pylab.plot(par_range,max_loglik-(par_range-op_par[i])**2/2./av_err[i]**2,'r--')
-        pylab.axvline(op_par[i],color='r')
-        pylab.axvline(old_op_par[i],color='0.5',ls='--')
-        pylab.axvline(op_par[i]+err_pos[i],color='g')
-        pylab.axvline(op_par[i]-err_neg[i],color='g')
-        pylab.axhline(max_loglik-0.5,color='g',ls='--')
-        pylab.axhline(max_loglik,color='r',ls='--')
-        pylab.xlabel("p[%s]" % str(i))
-        pylab.ylabel("log Posterior")
-        pylab.text(1,0.8,"par = {} +- {}".format(op_par[i], err_pos[i]),transform=ax.transAxes)
-        #print "mean (+-) = ", op_par[i], err_pos[i], err_neg[i],
-        pylab.draw()
-        if savefig: plt.savefig("ConditionalErrors_par{}.pdf".format(i))
-        raw_input("continue?")
+        ax = axes[j]
+        ax.plot(par_range,log_lik-max_loglik,'b-')
+        ax.plot(par_range,log_lik-max_loglik,'k.')
+        ax.plot(par_range,-(par_range-op_par[i])**2/2./av_err[i]**2,'r--')
+        ax.axvline(op_par[i],color='r')
+        ax.axvline(old_op_par[i],color='0.5',ls='--')
+        ax.axvline(op_par[i]+err_pos[i],color='g')
+        ax.axvline(op_par[i]-err_neg[i],color='g')
+        ax.axhline(-0.5,color='g',ls='--')
+        ax.axhline(0.,color='r',ls='--')
+        ax.set_xlabel(r"$\theta [{}]$".format(i))
+        ax.set_ylabel("$\Delta\log L$")
+#        ax.text(0.1,0.1,"par = {:2f} +- {:2f}".format(op_par[i], err_pos[i]),transform=ax.transAxes)
+        ax.set_title("$p = {:2f}\pm{:2f}$".format(op_par[i], err_pos[i]),fontsize='x-small')
 
   return op_par,(np.abs(err_pos)+np.abs(err_neg))/2.
 

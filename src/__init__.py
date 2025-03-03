@@ -52,3 +52,8 @@ from .CorrelationPlots import *
 # from .GPPeriodicKernelFunctions import *
 # 
 # from .GPToeplitz import *
+
+
+#in dev/experimental
+from .MCMC_Class import *
+

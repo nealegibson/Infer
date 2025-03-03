@@ -63,7 +63,7 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
   
   #set burn in value, only used for the GR calculation to check convergence
   burn_in = np.max([adapt_limits[1],glob_limits[1]])
-  if burn_in == 0: burn_in = ch_len/2
+  if burn_in == 0: burn_in = ch_len//2
   
   #print parameters at start of chain
   PrintParams(chain_filenames,var_ch_len,burn_in,ext_len,max_ext,LogPosterior,adapt_limits,glob_limits,gp,ep)
@@ -74,8 +74,8 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
   p_acc,L_acc = np.copy(p),np.array([-np.inf,]*N)
   
   #arrays for storing results
-  ParArr = np.zeros((N,var_ch_len/thin,len(p[0])))
-  PostArr = np.zeros((N,var_ch_len/thin))
+  ParArr = np.zeros((N,var_ch_len//thin,len(p[0])))
+  PostArr = np.zeros((N,var_ch_len//thin))
   AccArr = np.zeros((N,var_ch_len))
   
   #jump parameters, error array computed in advance - much faster to compute as a block
@@ -91,7 +91,7 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
   start = time.time()
   i = 0
   while i<var_ch_len: #use while loop as var_ch_len is adjusted
-    if i % ((var_ch_len)/20) == 0:
+    if i % ((var_ch_len)//20) == 0:
       PrintBar(i,chain_filenames,ch_len,var_ch_len,AccArr,start)  
 
     ################ MH step for each chain ################
@@ -106,24 +106,24 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
         p_acc[n],L_acc[n] = p_prop,L_prop
         AccArr[n][i] = 1 #update acceptance array
       #add new posterior and parameters to chain
-      if i%thin==0: ParArr[n][i/thin],PostArr[n][i/thin] = p_acc[n],L_acc[n]
+      if i%thin==0: ParArr[n][i//thin],PostArr[n][i//thin] = p_acc[n],L_acc[n]
 
     ################ Adaptive step sizes ################
     #adaptive stepsizes - shouldn't be executed after arrays extended in current form!
     if (i <= adapt_limits[1]) and (i > adapt_limits[0]):
-      if (i-adapt_limits[0]) % ((adapt_limits[1]-adapt_limits[0])/adapt_limits[2]) == 0:
+      if (i-adapt_limits[0]) % ((adapt_limits[1]-adapt_limits[0])//adapt_limits[2]) == 0:
         for n in range(N):
-          if orth: K[n] = np.diag(((e + 4*ParArr[n][adapt_limits[0]/thin:i/thin].std(axis=0))/5.)**2.) #for diagonal covariance matrix
-          else: K[n] = (K[n] + 4.*np.cov(ParArr[n][adapt_limits[0]/thin:i/thin],rowvar=0))/5.
+          if orth: K[n] = np.diag(((e + 4*ParArr[n][adapt_limits[0]//thin:i//thin].std(axis=0))/5.)**2.) #for diagonal covariance matrix
+          else: K[n] = (K[n] + 4.*np.cov(ParArr[n][adapt_limits[0]//thin:i//thin],rowvar=0))/5.
 #          K[n][np.where(e[n]==0.)],K[n][:,np.where(e[n]==0.)] = 0.,0. #reset error=0. values to 0.
           K[n][np.where(np.isclose(e[n],0.))],K[n][:,np.where(np.isclose(e[n],0.))] = 0.,0. #reset error=0. values to 0.
           RandArr[n,i:] = np.random.multivariate_normal(np.zeros(p[n].size),K[n],var_ch_len-i) * G[n]
           RandArr[n,i:][:,np.where(e[n]==0.)[0]] = 0. #set columns to zero after too!
     #adaptive global step size
     if (i <= glob_limits[1]) and (i > glob_limits[0]):
-      if (i-glob_limits[0]) % ((glob_limits[1]-glob_limits[0])/glob_limits[2]) == 0:
+      if (i-glob_limits[0]) % ((glob_limits[1]-glob_limits[0])//glob_limits[2]) == 0:
         for n in range(N):
-          G[n] *= (1./acc) *  min(0.9,max(0.1,AccArr[n][i-(glob_limits[1]-glob_limits[0])/glob_limits[2]:i].sum()/((glob_limits[1]-glob_limits[0])/glob_limits[2])))
+          G[n] *= (1./acc) *  min(0.9,max(0.1,AccArr[n][i-(glob_limits[1]-glob_limits[0])//glob_limits[2]:i].sum()/((glob_limits[1]-glob_limits[0])//glob_limits[2])))
           RandArr[n,i:] = np.random.np.random.multivariate_normal(np.zeros(p[n].size),K[n],var_ch_len-i) * G[n]
           RandArr[n,i:][:,np.where(e[n]==0.)[0]] = 0.
 
@@ -138,8 +138,8 @@ def MCMC_N(LogPosterior,gp,post_args,ch_len,ep,N=1,chain_filenames=['MCMC_chain_
           RandArr = np.concatenate([RandArr,np.random.multivariate_normal(np.zeros(p[0].size),K[0],(N,ext_len)) * G[0]],axis=1)
           RandArr[:,i:,np.where(e[n]==0.)[0]] = 0. #set columns to zero after too!
           RandNoArr = np.concatenate([RandNoArr,np.random.rand(N,ext_len)],axis=1)
-          ParArr = np.concatenate([ParArr,np.zeros((N,ext_len/thin,len(p[0])))],axis=1)
-          PostArr = np.concatenate([PostArr,np.zeros((N,ext_len/thin))],axis=1)
+          ParArr = np.concatenate([ParArr,np.zeros((N,ext_len//thin,len(p[0])))],axis=1)
+          PostArr = np.concatenate([PostArr,np.zeros((N,ext_len//thin))],axis=1)
           AccArr = np.concatenate([AccArr,np.zeros((N,ext_len))],axis=1)   
           var_ch_len += ext_len
         else:
@@ -171,8 +171,8 @@ def PrintBar(i,ch_files,ch_len,var_ch_len,AccArr,start,finish=False,extra_st="",
   N = len(ch_files)
   print ("Running {} chains:".format(N) + extra_st)
   for n in range(N):
-    a_str = "" if i <= ch_len/5 else ", acc = %.2f%%  " % (100.*np.float(AccArr[n][ch_len/5:i].sum())/(i-ch_len/5))
-    print (u" chain %s: '%s' \033[31m%-21s\033[0m t = %dm %.2fs%s" % (n+1,ch_files[n],'#'*(i/(var_ch_len/20)+1),ts // 60., ts % 60.,a_str))
+    a_str = "" if i <= ch_len//5 else ", acc = %.2f%%  " % (100.*np.float(AccArr[n][ch_len//5:i].sum())/(i-ch_len//5))
+    print (u" chain %s: '%s' \033[31m%-21s\033[0m t = %dm %.2fs%s" % (n+1,ch_files[n],'#'*(i//(var_ch_len//20)+1),ts // 60., ts % 60.,a_str))
   sys.stdout.write('\033[{}A'.format(N+1))
   if finish: print ("\n"*(N+1) + end_st)
 

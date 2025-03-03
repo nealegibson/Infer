@@ -14,7 +14,8 @@ def CorrelationAxes(N,inv=False,labels=None,left=0.07,bottom=0.07,right=0.93,top
   Returns axes for correlation plots
   """
   
-  plt.subplots_adjust(left=left,bottom=bottom,right=right,top=top,wspace=wspace,hspace=hspace)
+  
+#  if fig is None: plt.figure()
   
   ax = {}
   if labels is None:
@@ -42,6 +43,8 @@ def CorrelationAxes(N,inv=False,labels=None,left=0.07,bottom=0.07,right=0.93,top
       ax['{}{}'.format(i,0)].set_ylabel(labels[i])
       ax['{}{}'.format(i,0)].yaxis.set_label_position('right') 
   
+  plt.subplots_adjust(left=left,bottom=bottom,right=right,top=top,wspace=wspace,hspace=hspace)
+  
   return ax
   
 ###############################################################################
@@ -58,6 +61,30 @@ def CorrelationHist(X,ax=False,inv=False,**kwargs):
   #make a plot of the histograms accross the diagonal
   for i in range(N):
     ax['{}{}'.format(i,i)].hist(X[:,i],20,histtype='step',density=1,**kwargs)
+  
+  return ax
+
+###############################################################################
+
+def CorrelationNormalMarg(p,pe,X=None,Nsig=5,Nsamp=500,ax=False,inv=False,**kwargs):
+  
+  #get no of dimensions
+  N = p.size
+  
+  #create axes if not provided
+  if ax==False:  
+    ax = CorrelationAxes(N,inv=inv)
+  
+  #make a plot of the histograms accross the diagonal
+  for i in range(N):
+    x = np.linspace(p[i]-pe[i]*Nsig,p[i]+pe[i]*Nsig,Nsamp)
+    y = np.exp(-0.5*(x-p[i])**2/pe[i]**2) / np.sqrt(2*np.pi) / pe[i]
+    ax['{}{}'.format(i,i)].plot(x,y,**kwargs)
+  
+  #also reset xranges for histograms if X is provided
+  if X is not None:
+    for i in range(N):
+      ax['{}{}'.format(i,i)].set_xlim(X[:,i][:].min(),X[:,i][:].max())
   
   return ax
   
@@ -109,7 +136,7 @@ def CorrelationCrossHairs(x,ax=False,inv=False,alpha=0.6,zorder=3,lw=0.5,ls=':',
   
 ###############################################################################
 
-def CorrelationEllipses(X=None,mu=None,K=None,ax=False,samples=100,inv=False,alpha=0.6,zorder=3,**kwargs):
+def CorrelationEllipses(X=None,mu=None,K=None,ax=False,inv=False,alpha=0.6,zorder=3,color='b',**kwargs):
     
   #get covariance matrix of X if not given
   if K is None:
@@ -151,7 +178,7 @@ def CorrelationEllipses(X=None,mu=None,K=None,ax=False,samples=100,inv=False,alp
       angle = np.arctan(v[:,0][1]/v[:,0][0]) * 180./np.pi #get angle from principle component
 
       e = [Ellipse(m,2*np.sqrt(w[0])*np.sqrt(n),2*np.sqrt(w[1])*np.sqrt(n),\
-          angle,lw=1,fill=True,alpha=0.2,ec='k',zorder=2) for n in [2.295817,6.1801,11.83]]
+          angle,lw=1,fill=True,alpha=0.2,ec='k',zorder=2,color=color) for n in [2.295817,6.1801,11.83]]
 
       for n in range(3): ax['{}{}'.format(i,q)].add_patch(e[n])
       ax['{}{}'.format(i,q)].plot()
@@ -291,7 +318,7 @@ def CorrelationFilledContours(X,ax=False,inv=False,Nz=5,Nm=5,Ng=2,alpha=0.2,zord
   
 ###############################################################################
 
-def SamplePlot(X,conv=None,hist=True,scatter=True,filt=True,x=None,inv=False,labels=None,samples=500,contour=False,contourf=False):
+def SamplePlot(X,conv=None,hist=True,scatter=True,filt=True,x=None,inv=False,labels=None,samples=500,contour=False,contourf=False,ret_filt=False):
   """
   Convenience function for plotting MCMC samples from a file or array
     using defaults for above functions
@@ -318,10 +345,10 @@ def SamplePlot(X,conv=None,hist=True,scatter=True,filt=True,x=None,inv=False,lab
   else: raise ValueError("X not in correct format. Should be filename or list of filenames, multiple 2D arrays, or 3D array")
       
   #define labels is not done already (as need to reverse for inv)
-  if labels is None: labels = [r'$\theta_{{{}}}$'.format(i+1) for i in range(S.shape[-1])]
+  if labels is None: labels = [r'$\theta_{{{}}}$'.format(i) for i in range(S.shape[-1])]
 
   if filt: #filter out the fixed parameters
-    filt = np.std(S,axis=(0,1))>0
+    filt = ~np.isclose(np.std(S,axis=(0,1)),0)
   else:
     filt = np.ones(S.shape[-1])>0
   
@@ -353,62 +380,145 @@ def SamplePlot(X,conv=None,hist=True,scatter=True,filt=True,x=None,inv=False,lab
     CorrelationContours(S[...,filt].reshape(-1,filt.sum()),ax=ax)
   if contourf:
     CorrelationFilledContours(S[...,filt].reshape(-1,filt.sum()),filled=True,ax=ax)
+   
+  if ret_filt: return ax,filt
+  else: return ax
+  
 
-  return ax
-  
-  
-def CorrelationPlot(conv_length,p=None,inv=False,n_chains=None,chain_filenames=None,saveplot=False,filename="CorrelationPlot.pdf",labels=None,n_samples=500):
-  """
-  Make correlation plots from MCMC output, plus histograms of each of the parameters.
-  
-  """
-  
-  #get chain names tuple
-  if n_chains is None and chain_filenames is None:
-    chain_filenames=("MCMC_chain",)  
-  if n_chains is not None:
-    chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
-  if n_chains is None:
-    n_chains = len(chain_filenames)
-  
-  X_temp = np.load(chain_filenames[0]+'.npy')
-  ch_length = X_temp[:,0].size - conv_length
+###############################################################################
+###############################################################################
 
-  if p is None: #get total number of parmaeters if not supplied
-    no_pars = X_temp[0].size-1
-    p=range(no_pars)
-  else:
-    no_pars = len(p)
+def ChainAxes(N,labels=None,left=0.07,bottom=0.1,right=0.93,top=0.93,wspace=0.03,hspace=0.03):
 
-  if labels is None: #create labels for plots if not provided
-    labels = ['p[%d]' % p[q] for q in range(no_pars)]
+  
+  ax = {}
+  if labels is None:
+    labels = [r'$\theta_{{{}}}$'.format(i+1) for i in range(N)]
+  
+#   for i in range(N): #loop over the parameter indexes supplied
+#     a = ax[i] = plt.subplot(N,1,i+1,yticks=[],xticklabels=[],sharex=ax[i-1] if i>=1 else None)      
+#   ax = [plt.subplot(N,1,i+1,yticks=[]) for i in range(N)]
+#   for a in ax[0:-1]: a.sharex(ax[-1])
+#   
+#   ax_bottom = plt.subplot(N,5,(5*(N-1)+1,5*(N-1)+4),yticks=[])
+#   ax = [plt.subplot(N,1,i+1,yticks=[],sharex=ax_bottom) for i in range(0,N-1)] + [ax_bottom]
+#   for a in ax[:-1]: plt.setp(a.get_xticklabels(), visible=False) 
+#  ax = [plt.subplot(N,1,i+1,yticks=[],sharex=ax_bottom) for i in range(0,N-1)] #+ [ax_bottom]
 
-  #get axes
-  ax = CorrelationAxes(no_pars,inv=inv)
+  ax_bottom = plt.subplot(N,5,(5*(N-1)+1,5*(N-1)+4),yticks=[])
+  ax = [plt.subplot(N,5,(i*5+1,i*5+4),yticks=[],sharex=ax_bottom) for i in range(0,N-1)] + [ax_bottom]
+  for a in ax[:-1]: plt.setp(a.get_xticklabels(), visible=False) #hide axes
+  ax_hist = [plt.subplot(N,5,5*i+5,yticks=[],xticks=[]) for i in range(N)]
+
+#  f,ax = plt.subplots(N,1,sharex=True,subplot_kw=dict(yticks=[]))
+  ax[-1].set_xlabel('N')
+  for a,label in zip(ax,labels): a.set_ylabel(label) 
   
-  #create array to store data
-  X = np.empty((n_chains,ch_length,no_pars))
-  
-  #get data
-  for i,file in enumerate(chain_filenames):  
-    X[i] = np.load(file+'.npy')[conv_length:,1:]
+  plt.subplots_adjust(left=left,bottom=bottom,right=right,top=top,wspace=wspace,hspace=hspace)
       
-  for i in range(n_chains):
-    CorrelationScatterPlot(X[i],ax=ax,samples=samples)
+      #a.set_xticks()
+             
+  return ax,ax_hist
 
-  for i in range(n_chains):
-    CorrelationHist(X[i],ax=ax)
+def ChainPlot(X,fmt='-',alpha=1,ax=False,ax_hist=False,conv=None,filt=True,x=None,labels=None,lw=0.5):
+  """
+  Plot the 1D chains.
+  Assumes X is chainlength x Nchains x pars
+  """  
   
-  #X[:,0] -= X[:,0].mean()
-  
-  #plot histograms and density
-#  CorrelationHist(X,ax=ax)
-#  CorrelationDensity(X[i],ax=ax)
-  CorrelationDensity(X.reshape(-1,no_pars),ax=ax)
-  
-#  print (X.shape)
-#  print (ax.keys())
-  return ax
+  #first convert X into arrays if given as string(s)
+  if (type(X) is list or type(X) is tuple):
+    if type(X[0]) is str: #list of files
+      X = [np.load(file)[:,1:] for file in X]
+  elif type(X) is str:
+    X = np.load(X)[:,1:]
+    
+  #check/convert X into right array format
+  if (type(X) is list or type(X) is tuple):
+    if type(X[0]) is np.ndarray and X[0].ndim == 2:
+      S = np.hstack([x[conv:,np.newaxis,:] for x in X]) # join 2D arrays along new 'middle' axes  
+  elif X.ndim==2: S = X[conv:,np.newaxis,:]
+  elif X.ndim==3: S = X[conv:]
+  else: raise ValueError("X not in correct format. Should be filename or list of filenames, multiple 2D arrays, or 3D array")
+      
+  #define labels is not done already (as need to reverse for inv)
+  if labels is None: labels = [r'$\theta_{{{}}}$'.format(i) for i in range(S.shape[-1])]
 
+  if filt: #filter out the fixed parameters
+    filt = ~np.isclose(np.std(S,axis=(0,1)),0)
+  else:
+    filt = np.ones(S.shape[-1])>0
+    
+  #first get the axes
+  if ax is False: ax,ax_hist = ChainAxes(filt.sum(),labels=np.array(labels)[filt])
+  elif ax_hist is False: raise ValueError("Must set both ax and ax_hist or neither!")
+  
+  Sfilt = S[...,filt] #get rid of fixed parameters
+  for q in range(Sfilt.shape[2]):
+    for i in range(Sfilt.shape[1]): #loop over chains
+      ax[q].plot(Sfilt[:,i,q],fmt,lw=lw,alpha=alpha)
+      ax_hist[q].hist(Sfilt[:,i,q],density=True,histtype='step',orientation='horizontal',lw=lw)
+  ax[-1].set_xlim(0,Sfilt.shape[0])
+#     if q==Sfilt.shape[2]-1: ax[q].set_xticks([0,Sfilt.shape[0]])
+#     else: ax[q].set_xticklabels([])
 
+  return ax,ax_hist
+
+###############################################################################
+###############################################################################
+   
+# def CorrelationPlot(conv_length,p=None,inv=False,n_chains=None,chain_filenames=None,saveplot=False,filename="CorrelationPlot.pdf",labels=None,n_samples=500):
+#   """
+#   Make correlation plots from MCMC output, plus histograms of each of the parameters.
+#   
+#   """
+#   
+#   #get chain names tuple
+#   if n_chains is None and chain_filenames is None:
+#     chain_filenames=("MCMC_chain",)  
+#   if n_chains is not None:
+#     chain_filenames = ["MCMC_chain_%d" % i for i in range(1,n_chains+1)]
+#   if n_chains is None:
+#     n_chains = len(chain_filenames)
+#   
+#   X_temp = np.load(chain_filenames[0]+'.npy')
+#   ch_length = X_temp[:,0].size - conv_length
+# 
+#   if p is None: #get total number of parmaeters if not supplied
+#     no_pars = X_temp[0].size-1
+#     p=range(no_pars)
+#   else:
+#     no_pars = len(p)
+# 
+#   if labels is None: #create labels for plots if not provided
+#     labels = ['p[%d]' % p[q] for q in range(no_pars)]
+# 
+#   #get axes
+#   ax = CorrelationAxes(no_pars,inv=inv)
+#   
+#   #create array to store data
+#   X = np.empty((n_chains,ch_length,no_pars))
+#   
+#   #get data
+#   for i,file in enumerate(chain_filenames):  
+#     X[i] = np.load(file+'.npy')[conv_length:,1:]
+#       
+#   for i in range(n_chains):
+#     CorrelationScatterPlot(X[i],ax=ax,samples=samples)
+# 
+#   for i in range(n_chains):
+#     CorrelationHist(X[i],ax=ax)
+#   
+#   #X[:,0] -= X[:,0].mean()
+#   
+#   #plot histograms and density
+# #  CorrelationHist(X,ax=ax)
+# #  CorrelationDensity(X[i],ax=ax)
+#   CorrelationDensity(X.reshape(-1,no_pars),ax=ax)
+#   
+# #  print (X.shape)
+# #  print (ax.keys())
+#   return ax
+# 
+# 
     

@@ -8,7 +8,146 @@ from .leastsqbound import leastsqbound
 
 ##########################################################################################
 
-def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False,return_AIC=False,verbose=True,fix_noise=False):#,maxiter=10000, maxfun=10000, verbose=True):
+def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False,return_AIC=False,verbose=True,fix_noise=False,method='trf',**kwargs):#,maxiter=10000, maxfun=10000, verbose=True):
+  """
+  Function wrapper for Levenberg-Marquardt via scipy.optimize.least_sq
+  
+  Similar interface to Optimiser.py to allow for fixed parameters.
+  
+  Has a similar syntax to Optimiser, but requires the function to be passed rather than
+  the likelihood function (therefore cannot optimise noise parameters, The error
+  estimates from LM optimisation are useful to seed MCMC, and also can be used to compute
+  an evidence approximation (via BIC, AIC or Laplace optimisation). Care needs to be taken
+  as to the reliability of the uncertainties compared to an MCMC, and this should
+  generally only be used as an approximation.
+  
+  Parameters
+  ----------
+  func : function to fit
+  par : parameters of function
+  func_args : arguments to function
+  y : measurements
+  err : uncertainties for each measurement, defaults to array of ones
+  fixed : array of fixed parameters
+  bounds : array of boundaries (min,max) pairs for each parameter, array (N_param x 2)
+    - input None where for no lower/upper boundary. bounds = None uses std leastsq
+  return_BIC : return BIC evidence estimate
+  return_AIC : return AIC evidence estimate
+  fix_noise : if True, don't rescale errorbars according to chi2
+  kwargs : additional args passed to least_squares
+  
+  Returns
+  -------
+  bf_par : fitted parameter vector
+  err_par : uncertainty estimate for each parameter
+  rescale : rescale value for errors, equivalent to white noise estimate for err = 1
+      std of the residuals in this case, or if err provided a rescale to get true noise
+  K_fit : covariance matrix of the fitted parameters (should edit to include non-fitted terms?)
+      edits will be needed to use in laplace optimisation of alpha parameters...
+  logE : evidence approximation from Laplace approximation
+  logE_BIC : evidence approximation from BIC (optional)
+  logE_AIC : evidence approximation from AIC (optional)
+  
+  """
+  
+  #set fixed from bounds if given
+  if fixed is None and bounds is not None:
+    fixed = [1 if i is None else 0 for i in bounds]
+    #print(fixed)
+  
+  #make variable and fixed par arrays
+  if fixed is None:
+    var_par = np.copy(par)
+    fixed_par = None
+  #otherwise construct the parameter vector from var_par and fixed_par_val
+  else:
+    par = np.array(par)
+    fixed = np.array(fixed) #ensure fixed is a np array
+    #assign parameters to normal param vector
+    fixed_par = par[np.where(fixed==True)]
+    var_par = par[np.where(fixed!=True)]
+  
+  #set error vector if not provided
+  if err is None: err = np.ones_like(y)
+  else: err = err * np.ones_like(y)
+    
+  #get the bounds for variable parameters
+  if bounds is None:
+    bounds_trf = (-np.inf, np.inf) #default for least_squares
+  else: #convert to correct format - two lists of lower/upper limits of same length as var_par
+    bounds_trf = [np.array([i[0] if np.iterable(i) else 0. for i in bounds])[np.where(fixed==False)],np.array([i[1] if np.iterable(i) else 0. for i in bounds])[np.where(fixed==False)]]
+  
+  #perform the optimisation:
+  #if bounds is None: R = leastsq(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),full_output=1)
+  R = least_squares(LM_ErrFunc,var_par,args=(func,func_args,y,err,fixed,fixed_par),method=method,verbose=0,bounds=bounds_trf,**kwargs)
+  fitted_par = R.x
+  H = np.dot(R.jac.T,R.jac) #hessian matrix
+  K_fit = np.linalg.inv(H) #covariance matrix
+  nfev = R.nfev
+  
+  #reconstruct the full parameter vector and covariance matrix
+  if fixed is None:
+    bf_par = fitted_par
+    return_err = np.sqrt(np.diag(K_fit))
+    err_par = np.sqrt(np.diag(K_fit))
+    K = K_fit
+  else:
+    bf_par = np.copy(par)    
+    bf_par[np.where(fixed!=True)] = fitted_par
+    err_par = np.zeros(par.size)
+    err_par[np.where(fixed!=True)] = np.sqrt(np.diag(K_fit))
+    K = K_fit
+  
+  #rescale errors and covariance
+  rescale = np.std((y - func(bf_par,*func_args)) / err)
+  if not fix_noise:
+    K_fit *= rescale**2
+    err_par *= rescale
+  
+  #estimate the white noise from the residuals
+  resid = y - func(bf_par,*func_args)
+  wn = np.std(resid)
+  
+  if verbose:
+    print ("-"*80)
+    print ("LM fit parameter estimates: (function evals: {})".format(nfev))
+    print (" par = mean +- err")
+    for i in range(bf_par.size): print (" p[{}] = {:.8f} +- {:.8f}".format(i,bf_par[i],err_par[i]))
+    print ("white noise =", wn)
+    if not fix_noise: print ("rescale =", rescale)
+    if not fix_noise: print ("beta =", np.sqrt(rescale))
+  
+  #calculate the log evidence for the best fit model
+  if fix_noise: logP_max = LogLikelihood_iid(resid,1.,err)
+  else: logP_max = LogLikelihood_iid(resid,1.,err*rescale)
+  D = np.diag(K_fit).size
+  N_obs = y.size
+  logE_BIC = logP_max - D/2.*np.log(N_obs)
+  logE_AIC = logP_max - D * N_obs / (N_obs-D-1.)
+  sign,logdetK = np.linalg.slogdet( 2*np.pi*K_fit ) # get log determinant
+  logE = logP_max + 0.5 * logdetK #get evidence approximation based on Gaussian assumption
+  
+  if fixed is None or fixed.sum()==0:
+    Kn = K
+  else: #expand K to the complete covariance matrix - ie even fixed parameters + white noise
+    #ind = np.hstack([(fixed==0).cumsum()[np.where(fixed==1)],K.diagonal().size]) #get index to insert zeros
+    ind = (fixed==0).cumsum()[np.where(fixed==1)]
+    Kn = np.insert(np.insert(K,ind,0,axis=0),ind,0,axis=1) #insert zeros corresponding to fixed pars
+  
+  if verbose:
+    print ("Gaussian Evidence approx:")
+    print (" log ML =", logP_max)
+    print (" log E =", logE)
+    print (" log E (BIC) =", logE_BIC, "(D = {}, N = {})".format(D,N_obs))
+    print (" log E (AIC) =", logE_AIC, "(D = {}, N = {})".format(D,N_obs))
+    print ("-"*80)
+
+  ret_list = [bf_par,err_par,rescale,Kn,logE]
+  if return_BIC: ret_list.append(logE_BIC)
+  if return_AIC: ret_list.append(logE_AIC)
+  return ret_list
+
+def LevMarOld(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False,return_AIC=False,verbose=True,fix_noise=False):#,maxiter=10000, maxfun=10000, verbose=True):
   """
   Function wrapper for Levenberg-Marquardt via scipy.optimize.least_sq
   
@@ -82,7 +221,8 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
     R = least_squares(LM_ErrFunc,var_par,args=(func,func_args,y,err,fixed,fixed_par),method='trf',verbose=0)
     fitted_par = R.x
     H = np.dot(R.jac.T,R.jac) #hessian matrix
-    K_fit = np.linalg.inv(H) #covariance matrix
+    try: K_fit = np.linalg.inv(H) #covariance matrix
+    except: return R
     nfev = R.nfev
   else:
     R = leastsqbound(LM_ErrFunc,var_par,(func,func_args,y,err,fixed,fixed_par),bounds=bounds_var,full_output=1)
@@ -151,16 +291,22 @@ def LevMar(func,par,func_args,y,err=None,fixed=None,bounds=None,return_BIC=False
 
 ##########################################################################################
 #LogLikelihood_iid from MyFuncs, copied here to make stand alone
-def LogLikelihood_iid(r,beta,sig=1.):
+def LogLikelihood_iid(r,beta,sig=None):
   """
   logP function from residuals and noise vector (sig)
   - when sig = 1. it does not contribute to the noise budget,
   hence beta is then the global noise parameter, otherwise a rescale
   """
   
-  N = r.size
+  if sig is None:
+    N = r.size
+    sum_log_sigma = 0.
+  else: #filter out any infs in noise (should be ok in division)
+    index = np.isfinite(sig)
+    N = index.sum()
+    sum_log_sigma = np.log(sig[index]).sum()
   
-  logP = - (1./2.) * ( r**2 / (beta*sig)**2 ).sum() - np.log(sig).sum() - N*np.log(beta) - N/2.*np.log(2*np.pi)
+  logP = - (1./2.) * ( r**2 / (beta*sig)**2 ).sum() - sum_log_sigma - N*np.log(beta) - N/2.*np.log(2*np.pi)
   
   return logP
 
